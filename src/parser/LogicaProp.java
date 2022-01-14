@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.antlr.v4.runtime.CharStream;
@@ -16,7 +17,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 
 	public static enum LogicType {Conjunction, Disjunction, Implication, exDisjunction, Atom}	
 	
-	protected final String label;
+	protected String label;
 	private LogicType tipo;
 	protected List<LogicaProp> children;
 	protected Boolean negated;
@@ -34,7 +35,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 
 	//Operation
 	private LogicaProp(LogicaProp left, String label, LogicaProp right) {
-		this.label = null;
+		this.label = label;
 		children = List.of(left,right);
 		
 		switch (label) {
@@ -67,11 +68,16 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	private LogicaProp(LogicaProp logicaProp) {
 		this.label = logicaProp.getLabel();
 		this.tipo = logicaProp.getTipo();
-		this.children = logicaProp.getChildren().stream()
-				.map(expr->expr.getCopy())
-				.toList();
+		//To avoid endless recursion, the parent is set to null
+		//The children will get their parent set after being copied
+		this.parent = null;
+		this.children = logicaProp.getChildren()
+				.stream()
+				.map(expr->expr.getCopy().setParent(logicaProp))
+				.collect(Collectors.toList());
+		
 		this.negated = logicaProp.isNegated();
-		this.parent = new LogicaProp(logicaProp.parent);
+		
 	}
 	
 	/**
@@ -118,11 +124,22 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	
 	public void setType(LogicType type) {
 		//The target type and current type must both either be atoms or operators
-		if(!(this.tipo==LogicType.Atom ^ type==LogicType.Atom)) {
-			throw new IllegalArgumentException("Cannot convert "
-					+ "atom to operator or viceversa");
+		if(!(this.tipo==LogicType.Atom || type==LogicType.Atom)) {
+			throw new IllegalArgumentException("Cannot modify or"
+					+ "convert atoms");
 		}
 		this.tipo = type;
+		switch (type) {
+		case Disjunction: this.label = "or";
+			break;
+		case Conjunction: this.label = "and";
+			break;
+		case exDisjunction: this.label = "<->";
+			break;
+		case Implication: this.label = "->";
+			break;
+		default: throw new IllegalArgumentException("Invalid conversion");
+		}
 	}
 	
 	public void setChildren(LogicaProp leftChild, LogicaProp rightChild) {
@@ -157,8 +174,9 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		this.negated = neg;
 	}
 	
-	public void setParent(LogicaProp father) {
+	public LogicaProp setParent(LogicaProp father) {
 		this.parent = father;
+		return this;
 	}
 
 	public Boolean hasFather() {
@@ -178,8 +196,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	}
 
 	public List<LogicaProp> getChildren() {
-		return !this.isAtom()?
-				List.of(this.getLeft(),this.getRight()):null;
+		return this.children;
 	}
 
 	public Boolean isAtom() {

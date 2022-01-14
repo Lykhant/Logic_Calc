@@ -79,12 +79,11 @@ public class LogicaPropUtils {
 				
 				//(a or c), (a or d), (b or c), (b or d)
 				//(a or c) and ((a or d))
-				
+				//(((a or c) and (a or d)) and (b or c))
+				LogicaProp parent = LogicaProp.ofOp(zipped.get(0), "and", zipped.get(1));
 				//Nest expressions
-				for (int i = 0; i < zipped.size()-1; i++) {
-					LogicaProp parent = zipped.get(i);
-					LogicaProp child = zipped.get(i+1);
-					parent.setChildren(child, child);
+				for (int i = 2; i < zipped.size()-1; i++) {
+					parent = LogicaProp.ofOp(parent, "and", zipped.get(i));
 				}
 				
 				

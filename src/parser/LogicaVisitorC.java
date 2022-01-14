@@ -26,7 +26,7 @@ public class LogicaVisitorC extends LogicaBaseVisitor<LogicaProp>{
 	@Override
 	public LogicaProp visitNegado(NegadoContext ctx) {
 		// TODO Auto-generated method stub
-		return visit(ctx.getChild(1)).getComplementary();
+		return visit(ctx.getChild(1)).negate();
 	}
 
 	@Override
