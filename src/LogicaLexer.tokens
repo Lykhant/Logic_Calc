@@ -1,0 +1,16 @@
+T__0=1
+T__1=2
+ELEMENTO=3
+BICONDICIONAL=4
+IMPLICA=5
+AND=6
+OR=7
+NOT=8
+WS=9
+'('=1
+')'=2
+'<->'=4
+'->'=5
+'and'=6
+'or'=7
+'!'=8

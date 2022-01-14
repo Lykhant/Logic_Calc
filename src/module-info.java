@@ -1,0 +1,3 @@
+module logicCalc {
+	requires antlr;
+}
