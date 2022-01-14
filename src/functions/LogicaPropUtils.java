@@ -45,85 +45,82 @@ public class LogicaPropUtils {
 	/**
 	 * Converts the given propositional logic expression into CNF form.
 	 * <p>
-	 * Use {@link LogicaProp#getCopy()} for getting a copy if you don't
-	 * want to change the original expression.
+	 * 
 	 * 
 	 * @param in The expression to modify
+	 * @return 
 	 * 
 	 */
 	
-	public static void toCNF(LogicaProp in) {
-		
-		switch (in.getTipo()) {
-		case Atom: break;
-		case Disjunction: 
-			if(!in.isNegated()) {
-				toCNF(in.getLeft());
-				toCNF(in.getRight());
-				
-				//Distribution law
-				List<LogicaProp> leftChildren = in.getLeft().isAtom()?
-						List.of(in.getLeft()):
-						in.getLeft().getChildren();
-				List<LogicaProp> rightChildren = in.getRight().isAtom()?
-						List.of(in.getRight()):
-						in.getRight().getChildren();
-				
-				List<LogicaProp> zipped = new ArrayList<>();
-				
-				for (LogicaProp lChild : leftChildren) {
-					for (LogicaProp rChild : rightChildren) {
-						zipped.add(LogicaProp.ofOp(lChild, "or", rChild));
+	public static LogicaProp toCNF(LogicaProp in) {
+		if(!isCNF(in)) {
+			switch (in.getTipo()) {
+			case Atom: break;
+			case Disjunction: 
+				if(!in.isNegated()) {
+					in.setChildren(toCNF(in.getLeft()), 
+							toCNF(in.getRight()));
+					
+					//Distribution law
+					List<LogicaProp> leftChildren = in.getLeft().isAtom()?
+							List.of(in.getLeft()):
+							in.getLeft().getChildren();
+					List<LogicaProp> rightChildren = in.getRight().isAtom()?
+							List.of(in.getRight()):
+							in.getRight().getChildren();
+					
+					List<LogicaProp> zipped = new ArrayList<>();
+					
+					for (LogicaProp lChild : leftChildren) {
+						for (LogicaProp rChild : rightChildren) {
+							zipped.add(LogicaProp.ofOp(lChild, "or", rChild));
+						}
 					}
+					
+					in = LogicaProp.ofOp(zipped.get(0), "and", zipped.get(1));
+					//Nest expressions
+					for (int i = 2; i < zipped.size()-1; i++) {
+						in = LogicaProp.ofOp(in, "and", zipped.get(i));
+					}
+				} else {
+					//Apply De Morgan if formula is negated
+					in.negate();
+					in.getLeft().negate();
+					in.getRight().negate();
+					in.setType(LogicType.Conjunction);
+					toCNF(in);
 				}
-				
-				//(a or c), (a or d), (b or c), (b or d)
-				//(a or c) and ((a or d))
-				//(((a or c) and (a or d)) and (b or c))
-				LogicaProp parent = LogicaProp.ofOp(zipped.get(0), "and", zipped.get(1));
-				//Nest expressions
-				for (int i = 2; i < zipped.size()-1; i++) {
-					parent = LogicaProp.ofOp(parent, "and", zipped.get(i));
-				}
-				
-				
-			} else {
+				break;
+			case Conjunction: 
+				if(!in.isNegated()) {
+					in.setChildren(toCNF(in.getLeft()), 
+							toCNF(in.getRight()));
+				} else {
 				//Apply De Morgan if formula is negated
-				in.negate();
-				in.getLeft().negate();
-				in.getRight().negate();
+					in.negate();
+					in.getLeft().negate();
+					in.getRight().negate();
+					in.setType(LogicType.Disjunction);
+					toCNF(in);
+				}
+				break;
+			case exDisjunction: 
+				List<LogicaProp> children = in.getChildren();
 				in.setType(LogicType.Conjunction);
+				in.setChildren(
+						LogicaProp.ofOp(children.get(0).getCopy().negate(), "or", children.get(1).getCopy()),
+						LogicaProp.ofOp(children.get(1).negate(), "or", children.get(0)));
 				toCNF(in);
-			}
-			break;
-		case Conjunction: 
-			if(!in.isNegated()) {
-				toCNF(in.getLeft());
-				toCNF(in.getRight());
-			} else {
-			//Apply De Morgan if formula is negated
-				in.negate();
+				break;
+			case Implication: 
 				in.getLeft().negate();
-				in.getRight().negate();
 				in.setType(LogicType.Disjunction);
 				toCNF(in);
+				break;
 			}
-			break;
-		case exDisjunction: 
-			List<LogicaProp> children = in.getChildren();
-			in.setType(LogicType.Conjunction);
-			in.setChildren(
-					LogicaProp.ofOp(children.get(0).getCopy().negate(), "or", children.get(1).getCopy()),
-					LogicaProp.ofOp(children.get(1).negate(), "or", children.get(0)));
-			toCNF(in);
-			break;
-		case Implication: 
-			in.getLeft().negate();
-			in.setType(LogicType.Disjunction);
-			toCNF(in);
-			break;
 		}
-		
+		return in;
 	}
+
 	
 }

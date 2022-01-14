@@ -7,9 +7,8 @@ import functions.LogicaPropUtils;
 public class MainParser {
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		
-		String toParse = "a and (b or e) and c and (d or e)";
+		String toParse = "(a and b) or (c and d)";
 		
 		LogicaProp parsed = LogicaProp.parse(toParse);
 		System.out.println("Entrada: " + toParse);
@@ -23,6 +22,7 @@ public class MainParser {
 		
 		System.out.println("Is the formula in CNF? " + LogicaPropUtils.isCNF(parsed));
 		
+		System.out.println("CNF version: " + LogicaPropUtils.toCNF(parsed));
 	}
 
 }

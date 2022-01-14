@@ -123,9 +123,10 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	}
 	
 	public void setType(LogicType type) {
+		
 		//The target type and current type must both either be atoms or operators
-		if(!(this.tipo==LogicType.Atom || type==LogicType.Atom)) {
-			throw new IllegalArgumentException("Cannot modify or"
+		if(this.tipo==LogicType.Atom || type==LogicType.Atom) {
+			throw new IllegalArgumentException("Cannot modify or "
 					+ "convert atoms");
 		}
 		this.tipo = type;
