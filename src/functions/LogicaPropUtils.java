@@ -69,14 +69,23 @@ public class LogicaPropUtils {
 						List.of(in.getRight()):
 						in.getRight().getChildren();
 				
-				List<Map.Entry<LogicaProp, LogicaProp>> zipped = new ArrayList<>();
+				List<LogicaProp> zipped = new ArrayList<>();
 				
 				for (LogicaProp lChild : leftChildren) {
 					for (LogicaProp rChild : rightChildren) {
-						zipped.add(Map.entry(lChild.getCopy(), rChild.getCopy()));
+						zipped.add(LogicaProp.ofOp(lChild, "or", rChild));
 					}
 				}
 				
+				//(a or c), (a or d), (b or c), (b or d)
+				//(a or c) and ((a or d))
+				
+				//Nest expressions
+				for (int i = 0; i < zipped.size()-1; i++) {
+					LogicaProp parent = zipped.get(i);
+					LogicaProp child = zipped.get(i+1);
+					parent.setChildren(child, child);
+				}
 				
 				
 			} else {
