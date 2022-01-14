@@ -3,6 +3,7 @@ package parser;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Stack;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,24 +36,38 @@ public class LogicaProp implements Iterable<LogicaProp> {
 
 	//Operation
 	private LogicaProp(LogicaProp left, String label, LogicaProp right) {
-		this.label = label;
-		children = List.of(left,right);
 		
 		switch (label) {
 		case "->":
 			this.tipo = LogicType.Implication;
+			children = List.of(left,right);
 			break;
 		
 		case "<->":
 			this.tipo = LogicType.exDisjunction;
+			children = List.of(left,right);
 			break;
 			
 		case "and":
-			this.tipo = LogicType.Conjunction;
+			if(!left.equals(right)) {
+				this.tipo = LogicType.Conjunction;
+				children = List.of(left,right);
+			} else {
+				//a and a = a
+				this.tipo = left.getTipo();
+				this.children = left.getChildren();
+			}
 			break;
 		
 		case "or":
-			this.tipo = LogicType.Disjunction;
+			if(!left.equals(right)) {
+				this.tipo = LogicType.Disjunction;
+				children = List.of(left,right);
+			} else {
+				//a or a = a
+				this.tipo = left.getTipo();
+				this.children = left.getChildren();
+			}
 			break;
 			
 		default:
@@ -61,8 +76,14 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		
 		this.parent = null;
 		this.negated = false;
-		this.getLeft().setParent(this);
-		this.getRight().setParent(this);
+		
+		if(this.tipo!=LogicType.Atom) {
+			this.getLeft().setParent(this);
+			this.getRight().setParent(this);
+			this.label = label;
+		} else {
+			this.label = left.getLabel();
+		}
 	}
 
 	private LogicaProp(LogicaProp logicaProp) {
@@ -268,6 +289,24 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		
 		
 		
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(children, label, negated, tipo);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LogicaProp other = (LogicaProp) obj;
+		return Objects.equals(children, other.children) && Objects.equals(label, other.label)
+				&& Objects.equals(negated, other.negated) && tipo == other.tipo;
 	}
 	
 }
