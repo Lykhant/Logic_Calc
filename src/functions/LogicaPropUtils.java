@@ -22,6 +22,18 @@ public class LogicaPropUtils {
 				.collect(Collectors.toSet());
 	}
 	
+	/**
+	 * 
+	 * @param message The message to print
+	 * @param silent Whether the message should be printed or not
+	 */
+	public static void printStep(String message, Boolean silent) {
+		if(!silent) {
+			System.out.println(message);
+		}
+		
+	}
+	
 	public static Boolean isCNF(LogicaProp logic) {
 		
 		//Skip other calculations if the expression is an operation and is negated
@@ -140,4 +152,6 @@ public class LogicaPropUtils {
 		return clauses;
 	}
 	 
+	
+	
 }
