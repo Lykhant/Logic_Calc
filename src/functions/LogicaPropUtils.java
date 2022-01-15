@@ -40,19 +40,19 @@ public class LogicaPropUtils {
 		Boolean res = logic.isAtom() || !logic.isNegated();
 		
 		if(res) {
-			switch (logic.getTipo()) {
+			switch (logic.getType()) {
 			//If disjunction, it must not have a conjunction nested inside
-			case Disjunction:
-				res = logic.stream().noneMatch(expr->expr.getTipo() == LogicType.Disjunction);
+			case DISJUNCTION:
+				res = logic.stream().noneMatch(expr->expr.getType() == LogicType.DISJUNCTION);
 				break;
 			case Atom : break;
 			//Cannot contain exclusive disjunctions or implications
-			case exDisjunction:
-			case Implication:	
+			case BICONDITIONAL:
+			case IMPLICATION:	
 				res = false; 
 				break;
 			//If conjunction, both of its children must be in CNF
-			case Conjunction:
+			case CONJUNCTION:
 				res = isCNF(logic.getLeft()) && isCNF(logic.getRight());
 			break;
 			}
@@ -69,9 +69,9 @@ public class LogicaPropUtils {
 	 */
 	public static LogicaProp toCNF(LogicaProp in) {
 		if(!isCNF(in)) {
-			switch (in.getTipo()) {
+			switch (in.getType()) {
 			case Atom: break;
-			case Disjunction: 
+			case DISJUNCTION: 
 				if(!in.isNegated()) {
 					in.setChildren(toCNF(in.getLeft()), 
 							toCNF(in.getRight()));
@@ -99,11 +99,11 @@ public class LogicaPropUtils {
 					in.negate();
 					in.getLeft().negate();
 					in.getRight().negate();
-					in.setType(LogicType.Conjunction);
+					in.setType(LogicType.CONJUNCTION);
 					toCNF(in);
 				}
 				break;
-			case Conjunction: 
+			case CONJUNCTION: 
 				if(!in.isNegated()) {
 					in.setChildren(toCNF(in.getLeft()), 
 							toCNF(in.getRight()));
@@ -112,21 +112,21 @@ public class LogicaPropUtils {
 					in.negate();
 					in.getLeft().negate();
 					in.getRight().negate();
-					in.setType(LogicType.Disjunction);
+					in.setType(LogicType.DISJUNCTION);
 					toCNF(in);
 				}
 				break;
-			case exDisjunction: 
+			case BICONDITIONAL: 
 				List<LogicaProp> children = in.getChildren();
-				in.setType(LogicType.Conjunction);
+				in.setType(LogicType.CONJUNCTION);
 				in.setChildren(
 						LogicaProp.ofOp(children.get(0).getCopy().negate(), "or", children.get(1).getCopy()),
 						LogicaProp.ofOp(children.get(1).negate(), "or", children.get(0)));
 				toCNF(in);
 				break;
-			case Implication: 
+			case IMPLICATION: 
 				in.getLeft().negate();
-				in.setType(LogicType.Disjunction);
+				in.setType(LogicType.DISJUNCTION);
 				toCNF(in);
 				break;
 			}
@@ -138,7 +138,8 @@ public class LogicaPropUtils {
 	public static Set<Set<LogicaProp>> getClauses(LogicaProp in) {
 		LogicaProp CNF = toCNF(in);
 		Set<LogicaProp> disjunctions = CNF.stream()
-			.filter(expr->expr.getTipo()==LogicType.Disjunction)
+			.filter(expr->expr.getType()==LogicType.DISJUNCTION ||
+			expr.isAtom())
 			.collect(Collectors.toSet());
 		
 		//Gets the disjunctions that are not a child of another

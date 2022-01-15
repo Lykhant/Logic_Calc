@@ -3,6 +3,7 @@ package parser;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -16,7 +17,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 public class LogicaProp implements Iterable<LogicaProp> {
 
-	public static enum LogicType {Conjunction, Disjunction, Implication, exDisjunction, Atom}	
+	public static enum LogicType {CONJUNCTION, DISJUNCTION, IMPLICATION, BICONDITIONAL, Atom}	
 	
 	protected String label;
 	private LogicType tipo;
@@ -39,33 +40,33 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		
 		switch (label) {
 		case "->":
-			this.tipo = LogicType.Implication;
+			this.tipo = LogicType.IMPLICATION;
 			children = List.of(left,right);
 			break;
 		
 		case "<->":
-			this.tipo = LogicType.exDisjunction;
+			this.tipo = LogicType.BICONDITIONAL;
 			children = List.of(left,right);
 			break;
 			
 		case "and":
 			if(!left.equals(right)) {
-				this.tipo = LogicType.Conjunction;
+				this.tipo = LogicType.CONJUNCTION;
 				children = List.of(left,right);
 			} else {
 				//a and a = a
-				this.tipo = left.getTipo();
+				this.tipo = left.getType();
 				this.children = left.getChildren();
 			}
 			break;
 		
 		case "or":
 			if(!left.equals(right)) {
-				this.tipo = LogicType.Disjunction;
+				this.tipo = LogicType.DISJUNCTION;
 				children = List.of(left,right);
 			} else {
 				//a or a = a
-				this.tipo = left.getTipo();
+				this.tipo = left.getType();
 				this.children = left.getChildren();
 			}
 			break;
@@ -88,7 +89,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 
 	private LogicaProp(LogicaProp logicaProp) {
 		this.label = logicaProp.getLabel();
-		this.tipo = logicaProp.getTipo();
+		this.tipo = logicaProp.getType();
 		//To avoid endless recursion, the parent is set to null
 		//The children will get their parent set after being copied
 		this.parent = null;
@@ -143,6 +144,41 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		return this;
 	}
 	
+	/**
+	 * Returns the truth value of the expression given a map that assigns a value
+	 * to each variable.
+	 * 
+	 * @param values The map with the variables to replace and their values
+	 * @return The truth value in Boolean
+	 */
+	public Boolean eval(Map<String, Boolean> values) {
+		Boolean res = null;
+		switch (this.getType()) {
+		case Atom:
+			if(!values.containsKey(this.label)) {
+				throw new IllegalArgumentException("Variable " +
+			this.label + " is not mapped to any value");
+			}
+			res = values.get(this.label);
+			break;
+		case CONJUNCTION: 
+			res = this.getLeft().eval(values) && this.getRight().eval(values);
+			break;
+		case DISJUNCTION: 
+			res = this.getLeft().eval(values) || this.getRight().eval(values);
+			break;
+		case BICONDITIONAL:
+			res = this.getLeft().eval(values) == this.getRight().eval(values);
+			break;
+		case IMPLICATION: 
+			res = !this.getLeft().eval(values) || this.getRight().eval(values);
+			break;
+		default:
+			break;
+		}
+		return res;
+	}
+	
 	public void setType(LogicType type) {
 		
 		//The target type and current type must both either be atoms or operators
@@ -152,13 +188,13 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		}
 		this.tipo = type;
 		switch (type) {
-		case Disjunction: this.label = "or";
+		case DISJUNCTION: this.label = "or";
 			break;
-		case Conjunction: this.label = "and";
+		case CONJUNCTION: this.label = "and";
 			break;
-		case exDisjunction: this.label = "<->";
+		case BICONDITIONAL: this.label = "<->";
 			break;
-		case Implication: this.label = "->";
+		case IMPLICATION: this.label = "->";
 			break;
 		default: throw new IllegalArgumentException("Invalid conversion");
 		}
@@ -178,7 +214,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		return this.children.get(1);
 	}
 
-	public LogicType getTipo() {
+	public LogicType getType() {
 		return this.tipo;
 	}
 
