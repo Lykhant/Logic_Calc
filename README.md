@@ -6,9 +6,10 @@ My first personal Java project where I try to make a logic calculator in Java.
 ## Feature to do list:
 - [X] Parsing propositional logic formulas from Strings
 - [X] Converting formulas to CNF
-- [ ] Getting clauses
+- [X] Getting clauses
 - [ ] Getting truth value of formulas from variable values (truth tables?)
-
+- [ ] Different ways of getting satisfiability of formulas (with steps?)
+- [ ] First order logic implementation (will take a long time...)
 
 
 
