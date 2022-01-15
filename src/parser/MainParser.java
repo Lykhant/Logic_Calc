@@ -8,7 +8,7 @@ public class MainParser {
 
 	public static void main(String[] args) {
 		
-		String toParse = "a and a";
+		String toParse = "a or b or c and d";
 		
 		LogicaProp parsed = LogicaProp.parse(toParse);
 		System.out.println("Entrada: " + toParse);

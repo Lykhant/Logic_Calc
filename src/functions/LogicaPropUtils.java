@@ -3,6 +3,7 @@ package functions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import parser.LogicaProp;
 import parser.LogicaProp.LogicType;
@@ -22,10 +23,9 @@ public class LogicaPropUtils {
 		
 		if(res) {
 			switch (logic.getTipo()) {
-			//If disjunction, it must not have an AND nested inside
+			//If disjunction, it must not have a conjunction nested inside
 			case Disjunction:
-				res = logic.getChildren().stream()
-					.noneMatch(expr->expr.getTipo()==LogicType.Conjunction);
+				res = logic.stream().noneMatch(expr->expr.getTipo() == LogicType.Disjunction);
 				break;
 			case Atom : break;
 			//Cannot contain exclusive disjunctions or implications
@@ -71,17 +71,14 @@ public class LogicaPropUtils {
 					
 					List<LogicaProp> zipped = new ArrayList<>();
 					
-					for (LogicaProp lChild : leftChildren) {
-						for (LogicaProp rChild : rightChildren) {
-							zipped.add(LogicaProp.ofOp(lChild, "or", rChild));
-						}
-					}
+					leftChildren.stream()
+						.forEach(l->rightChildren.stream()
+								.forEach(r->zipped.add(LogicaProp.ofOp(l, "or", r))));
 					
-					in = LogicaProp.ofOp(zipped.get(0), "and", zipped.get(1));
-					//Nest expressions
-					for (int i = 2; i < zipped.size()-1; i++) {
-						in = LogicaProp.ofOp(in, "and", zipped.get(i));
-					}
+					in = zipped.stream()
+						.reduce((l1, l2) -> LogicaProp.ofOp(l1, "and", l2))
+						.get();
+					
 				} else {
 					//Apply De Morgan if formula is negated
 					in.negate();
