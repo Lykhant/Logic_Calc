@@ -2,18 +2,24 @@ package functions;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import parser.LogicaProp;
 import parser.LogicaProp.LogicType;
 
 public class LogicaPropUtils {
 	
-	public static List<LogicaProp> opList(LogicaProp expr) {
-		return expr.stream()
+	public static Set<LogicaProp> opSet(LogicaProp input) {
+		return input.stream()
 				.filter(e->!e.isAtom())
-				.toList();
+				.collect(Collectors.toSet());
+	}
+	
+	public static Set<LogicaProp> atomSet(LogicaProp input) {
+		return input.stream()
+				.filter(expr->expr.isAtom())
+				.collect(Collectors.toSet());
 	}
 	
 	public static Boolean isCNF(LogicaProp logic) {
@@ -44,14 +50,11 @@ public class LogicaPropUtils {
 	
 	/**
 	 * Converts the given propositional logic expression into CNF form.
-	 * <p>
-	 * 
 	 * 
 	 * @param in The expression to modify
 	 * @return 
 	 * 
 	 */
-	
 	public static LogicaProp toCNF(LogicaProp in) {
 		if(!isCNF(in)) {
 			switch (in.getTipo()) {
@@ -120,4 +123,21 @@ public class LogicaPropUtils {
 	}
 
 	
+	public static Set<Set<LogicaProp>> getClauses(LogicaProp in) {
+		LogicaProp CNF = toCNF(in);
+		Set<LogicaProp> disjunctions = CNF.stream()
+			.filter(expr->expr.getTipo()==LogicType.Disjunction)
+			.collect(Collectors.toSet());
+		
+		//Gets the disjunctions that are not a child of another
+		//Afterwards, gets their atoms
+		Set<Set<LogicaProp>> clauses = disjunctions.stream()
+				.filter(expr->disjunctions.stream()
+						.noneMatch(expr2->expr2.getChildren().contains(expr)))
+				.map(expr->atomSet(expr))
+				.collect(Collectors.toSet());
+		
+		return clauses;
+	}
+	 
 }
