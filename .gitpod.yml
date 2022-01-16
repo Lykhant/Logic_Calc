@@ -1,8 +1,7 @@
 tasks:
-  - before: |
-      sdk update
-      sdk install java 16.0.2.fx-zulu
   - init: |
-      echo 'TODO: build project'
+      echo 'Initalizing Java...'
+      sdk update <<< y
+      sdk install java 16.0.2.fx-zulu <<< y
     command: |
-      echo 'TODO: start app'
+      echo 'Build done!'
