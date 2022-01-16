@@ -176,6 +176,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		default:
 			break;
 		}
+		res = res ^ this.negated;
 		return res;
 	}
 	

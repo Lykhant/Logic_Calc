@@ -2,7 +2,9 @@ package functions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import parser.LogicaProp;
@@ -135,8 +137,8 @@ public class LogicaPropUtils {
 	}
 
 	
-	public static Set<Set<LogicaProp>> getClauses(LogicaProp in) {
-		LogicaProp CNF = toCNF(in);
+	public static Set<Set<LogicaProp>> getClauses(LogicaProp input) {
+		LogicaProp CNF = toCNF(input);
 		Set<LogicaProp> disjunctions = CNF.stream()
 			.filter(expr->expr.getType()==LogicType.DISJUNCTION ||
 			expr.isAtom())
@@ -153,6 +155,44 @@ public class LogicaPropUtils {
 		return clauses;
 	}
 	 
-	
+	public static void truthTable(LogicaProp input) {
+		
+		List<String> atoms = atomSet(input).stream()
+				.map(expr->expr.getLabel())
+				.distinct()
+				.sorted()
+				.toList();
+		
+		//Max binary value: 2^n - 1
+		Integer length = Double.valueOf(
+				Math.pow(2, atoms.size()))
+				.intValue();
+		
+		//Header
+		System.out.println(atoms.toString().replaceAll("[\\[,\\]]", "")
+				+ "\t" + input);
+		
+		for (int i = 0; i < length; i++) {
+			String binary = String.format("%" + atoms.size() + "s", 
+						Integer.toBinaryString(i))
+					.replace(" ", "0")
+					.replace("", " ")
+					.trim();
+			String[] values = binary.split(" ");
+					
+			Map<String, Boolean> mappedValues = atoms.stream()
+					.collect(Collectors.toMap(
+							at->at,
+							s->values[atoms.indexOf(s)].equals("1")));
+			
+			System.out.println(binary + "\t" + 
+					String.format("%" + input.toString().length()/2 + "s", 
+							(input.eval(mappedValues)? "1" : "0")));
+		}
+		
+		
+		
+		
+	}
 	
 }
