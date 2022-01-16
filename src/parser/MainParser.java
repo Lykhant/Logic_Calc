@@ -30,8 +30,7 @@ public class MainParser {
 		Integer a = 0b00100;
 		Integer b = 0b00011;
 		
-		
-		
+
 	}
 
 }

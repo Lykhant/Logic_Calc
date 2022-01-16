@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import parser.LogicaProp;
 import parser.LogicaProp.LogicType;
@@ -189,10 +190,48 @@ public class LogicaPropUtils {
 					String.format("%" + input.toString().length()/2 + "s", 
 							(input.eval(mappedValues)? "1" : "0")));
 		}
-		
-		
-		
-		
 	}
+	
+	public static Boolean isAlpha(LogicaProp expr) {
+		return (((expr.getType() == LogicType.CONJUNCTION ||
+				expr.getType() == LogicType.BICONDITIONAL) && !expr.isNegated())); 
+	}
+	
+	//((a->b),(a))
+	//((¬a),(a)),((b),(a))
+	public static Set<Set<LogicaProp>> truthTreeOp(Set<LogicaProp> branch) {
+		 LogicaProp toOperate = branch.stream()
+				.filter(expr->isAlpha(expr))
+				.findFirst()
+				.orElse(branch.stream()
+						.filter(expr->!expr.isAtom())
+						.findFirst().get());
+		 
+		 if (isAlpha(toOperate)) {
+			
+		} else {
+			
+		}
+		 
+		 
+		 return null;
+	}
+	
+	public static Set<Set<LogicaProp>> truthTree(LogicaProp input, Boolean silent) {
+		
+		var treee = Stream.iterate(
+				Set.of(Set.of(input)),
+				//Stop when all branches only have atoms
+				tree->tree.stream()
+					.allMatch(branch->branch.stream()
+							.allMatch(expr->expr.isAtom())),
+				tree->tree.stream()
+					.map(branch->null));
+			
+		
+		return null;
+	}
+	
+	
 	
 }
