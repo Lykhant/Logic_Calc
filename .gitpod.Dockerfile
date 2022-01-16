@@ -1,5 +1,3 @@
-FROM gitpod/workspace-full
+FROM gitpod/workspace-full[:latest]
 
-RUN . /home/gitpod/.sdkman/bin/sdkman-init.sh
-RUN sdk update <<< y
-RUN sdk install java 16.0.2.fx-zulu <<< y
+RUN bash -c ". /home/gitpod/.sdkman/bin/sdkman-init.sh && sdk update <<< y && sdk install java 16.0.2.fx-zulu <<< y"
