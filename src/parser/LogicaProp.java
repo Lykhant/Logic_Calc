@@ -17,10 +17,11 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 public class LogicaProp implements Iterable<LogicaProp> {
 
-	public static enum LogicType {CONJUNCTION, DISJUNCTION, IMPLICATION, BICONDITIONAL, Atom}	
+	public static enum LogicType {CONJUNCTION, DISJUNCTION, IMPLICATION, BICONDITIONAL, ATOM}	
+
 	
 	protected String label;
-	private LogicType tipo;
+	private LogicType type;
 	protected List<LogicaProp> children;
 	protected Boolean negated;
 	protected LogicaProp parent;
@@ -30,7 +31,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	public LogicaProp(String label) {
 		this.label = label;
 		this.children = List.of();
-		this.tipo = LogicType.Atom;
+		this.type = LogicType.ATOM;
 		this.parent = null;
 		this.negated = false;
 	}
@@ -40,33 +41,33 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		
 		switch (label) {
 		case "->":
-			this.tipo = LogicType.IMPLICATION;
+			this.type = LogicType.IMPLICATION;
 			children = List.of(left,right);
 			break;
 		
 		case "<->":
-			this.tipo = LogicType.BICONDITIONAL;
+			this.type = LogicType.BICONDITIONAL;
 			children = List.of(left,right);
 			break;
 			
 		case "and":
 			if(!left.equals(right)) {
-				this.tipo = LogicType.CONJUNCTION;
+				this.type = LogicType.CONJUNCTION;
 				children = List.of(left,right);
 			} else {
 				//a and a = a
-				this.tipo = left.getType();
+				this.type = left.getType();
 				this.children = left.getChildren();
 			}
 			break;
 		
 		case "or":
 			if(!left.equals(right)) {
-				this.tipo = LogicType.DISJUNCTION;
+				this.type = LogicType.DISJUNCTION;
 				children = List.of(left,right);
 			} else {
 				//a or a = a
-				this.tipo = left.getType();
+				this.type = left.getType();
 				this.children = left.getChildren();
 			}
 			break;
@@ -78,7 +79,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		this.parent = null;
 		this.negated = false;
 		
-		if(this.tipo!=LogicType.Atom) {
+		if(this.type!=LogicType.ATOM) {
 			this.getLeft().setParent(this);
 			this.getRight().setParent(this);
 			this.label = label;
@@ -89,7 +90,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 
 	private LogicaProp(LogicaProp logicaProp) {
 		this.label = logicaProp.getLabel();
-		this.tipo = logicaProp.getType();
+		this.type = logicaProp.getType();
 		//To avoid endless recursion, the parent is set to null
 		//The children will get their parent set after being copied
 		this.parent = null;
@@ -119,14 +120,35 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		return res;
 	}
 
+	/**
+	 * Creates an expression in propositional logic from an operation type
+	 * and its children.
+	 * 
+	 * @param leftChild The first expression
+	 * @param op The type of operation to represent
+	 * @param rightChild The second expression
+	 * @return The new expression in propositional logic
+	 */
+	
+	//TODO: Change from taking String to the LogicType enumerate
 	public static LogicaProp ofOp(LogicaProp leftChild, String op, LogicaProp rightChild) {
 		return new LogicaProp(leftChild, op, rightChild);
 	}
 
+	/**
+	 * Creates an atom to be used in propositional logic operations.
+	 * 
+	 * @param label The string that represents the variable
+	 * @return The new expression in propositional logic
+	 */
 	public static LogicaProp ofAtom(String label) {
 		return new LogicaProp(label);
 	}
 	
+	/**
+	 * Creates a deep copy of the given logic expression.
+	 * @return The copied logic expression
+	 */
 	public LogicaProp getCopy() {
 		return new LogicaProp(this);
 	}
@@ -145,22 +167,27 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	}
 	
 	/**
-	 * Returns the truth value of the expression given a map that assigns a value
+	 * Returns the truth value of the expression given a Map that assigns a value
 	 * to each variable.
 	 * 
-	 * @param values The map with the variables to replace and their values
-	 * @return The truth value in Boolean
+	 * @param values The Map with the variables to replace and their values
+	 * @return The truth value
+	 * @throws IllegalArgumentException If any of the variables are not in the map
 	 */
 	public Boolean eval(Map<String, Boolean> values) {
 		Boolean res = null;
+		
 		switch (this.getType()) {
-		case Atom:
+		//Atoms get their value directly from the Map
+		case ATOM:
 			if(!values.containsKey(this.label)) {
 				throw new IllegalArgumentException("Variable " +
 			this.label + " is not mapped to any value");
 			}
+			
 			res = values.get(this.label);
 			break;
+		//Operations make use of the values of their children
 		case CONJUNCTION: 
 			res = this.getLeft().eval(values) && this.getRight().eval(values);
 			break;
@@ -176,6 +203,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		default:
 			break;
 		}
+		//Invert the value if the expression is negated
 		res = res ^ this.negated;
 		return res;
 	}
@@ -183,11 +211,11 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	public void setType(LogicType type) {
 		
 		//The target type and current type must both either be atoms or operators
-		if(this.tipo==LogicType.Atom || type==LogicType.Atom) {
+		if(this.type==LogicType.ATOM || type==LogicType.ATOM) {
 			throw new IllegalArgumentException("Cannot modify or "
 					+ "convert atoms");
 		}
-		this.tipo = type;
+		this.type = type;
 		switch (type) {
 		case DISJUNCTION: this.label = "or";
 			break;
@@ -216,7 +244,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	}
 
 	public LogicType getType() {
-		return this.tipo;
+		return this.type;
 	}
 
 	/**
@@ -259,7 +287,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	}
 
 	public Boolean isAtom() {
-		return this.tipo == LogicType.Atom;
+		return this.type == LogicType.ATOM;
 	}
 	
 	@Override
@@ -267,7 +295,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 
 		String res;
 
-		if(this.tipo == LogicType.Atom) {
+		if(this.type == LogicType.ATOM) {
 			res = this.label;
 		} else {
 			res = "(" + this.getLeft() +
@@ -281,7 +309,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	}
 
 	
-	//Iterator con recorrido por profundidad
+	//Depth-first iterator
 	@Override
 	public Iterator<LogicaProp> iterator() {
 		return DepthPathLogicaProp.of(this);
@@ -330,7 +358,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(children, label, negated, tipo);
+		return Objects.hash(children, label, negated, type);
 	}
 
 	@Override
@@ -343,7 +371,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 			return false;
 		LogicaProp other = (LogicaProp) obj;
 		return Objects.equals(children, other.children) && Objects.equals(label, other.label)
-				&& Objects.equals(negated, other.negated) && tipo == other.tipo;
+				&& Objects.equals(negated, other.negated) && type == other.type;
 	}
 	
 }
