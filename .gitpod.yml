@@ -1,0 +1,7 @@
+tasks:
+  - init: |
+      echo 'Starting up:'
+    command: |
+      sdk update <<< y
+      sdk install java 16.0.2.fx-zulu <<< y
+      echo 'Build done!'
