@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,7 +60,7 @@ public class LogicaPropUtils {
 			switch (input.getType()) {
 			//If disjunction, it must not have a conjunction nested inside
 			case DISJUNCTION:
-				res = input.stream().noneMatch(expr->expr.getType() == LogicType.DISJUNCTION);
+				res = input.stream().noneMatch(expr->expr.getType() == LogicType.CONJUNCTION);
 				break;
 			case ATOM : break;
 			//Cannot contain exclusive disjunctions or implications
@@ -101,10 +100,12 @@ public class LogicaPropUtils {
 					
 					//Distribution law:
 					//Obtaining the children of the contained expressions
-					List<LogicaProp> leftChildren = inputCopy.getLeft().isAtom()?
-							List.of(inputCopy.getLeft()):
-							inputCopy.getLeft().getChildren();
-					List<LogicaProp> rightChildren = inputCopy.getRight().isAtom()?
+					List<LogicaProp> leftChildren = inputCopy.getLeft().isAtom()||
+							inputCopy.getLeft().getType() == LogicType.DISJUNCTION?
+									List.of(inputCopy.getLeft()):
+									inputCopy.getLeft().getChildren();
+					List<LogicaProp> rightChildren = inputCopy.getRight().isAtom() ||
+							inputCopy.getRight().getType() == LogicType.DISJUNCTION?
 							List.of(inputCopy.getRight()):
 							inputCopy.getRight().getChildren();
 					
@@ -156,7 +157,7 @@ public class LogicaPropUtils {
 				//Convert into disjunction with negated first element
 				inputCopy.getLeft().negate();
 				inputCopy.setType(LogicType.DISJUNCTION);
-				toCNF(inputCopy);
+				inputCopy = toCNF(inputCopy);
 				break;
 			}
 		}
@@ -164,24 +165,6 @@ public class LogicaPropUtils {
 	}
 
 	
-	public static Set<Set<LogicaProp>> getClauses(LogicaProp input) {
-		LogicaProp CNF = toCNF(input);
-		Set<LogicaProp> disjunctions = CNF.stream()
-			.filter(expr->expr.getType()==LogicType.DISJUNCTION ||
-			expr.isAtom())
-			.collect(Collectors.toSet());
-		
-		//Gets the disjunctions that are not a child of another
-		//Afterwards, gets their atoms
-		Set<Set<LogicaProp>> clauses = disjunctions.stream()
-				.filter(expr->disjunctions.stream()
-						.noneMatch(expr2->expr2.getChildren().contains(expr)))
-				.map(expr->atomSet(expr))
-				.collect(Collectors.toSet());
-		
-		return clauses;
-	}
-	 
 	/**
 	 * Print the truth table of a given logic expression.
 	 * @param input
@@ -403,6 +386,24 @@ public class LogicaPropUtils {
 	 */
 	public static Set<Set<LogicaProp>> truthTree(LogicaProp input, Boolean silent) {
 		return truthTree(Set.of(input), silent);
+	}
+
+	public static Set<Set<LogicaProp>> getClauses(LogicaProp input) {
+		LogicaProp CNF = toCNF(input);
+		Set<LogicaProp> disjunctions = CNF.stream()
+			.filter(expr->expr.getType()==LogicType.DISJUNCTION ||
+				expr.isAtom())
+			.collect(Collectors.toSet());
+		
+		//Gets the disjunctions and atoms that are not a child of another
+		//Afterwards, gets their atoms
+		Set<Set<LogicaProp>> clauses = disjunctions.stream()
+				.filter(expr->disjunctions.stream()
+						.noneMatch(expr2->expr2.getChildren().contains(expr)))
+				.map(expr->atomSet(expr))
+				.collect(Collectors.toSet());
+		
+		return clauses;
 	}
 	
 	
