@@ -42,7 +42,7 @@ public class LogicaVisitorC extends LogicaBaseVisitor<LogicaProp>{
 	public LogicaProp visitFAtomica(FAtomicaContext ctx) {
 		// TODO Auto-generated method stub
 		String atom = ctx.getText();
-		return LogicaProp.ofAtom(atom);
+		return LogicaProp.ofAtom(atom, false);
 	}
 
 }

@@ -1,6 +1,10 @@
 package functions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -406,5 +410,115 @@ public class LogicaPropUtils {
 		return clauses;
 	}
 	
+	public static Set<LogicaProp> clauseFromString(String atomLine) {
+		String[] atoms = atomLine.replace(" ", "").split(",");
+		
+		return Arrays.stream(atoms)
+				.filter(s->s.length()<=2)
+				.map(s->s.charAt(0) == '!'? 
+					LogicaProp.ofAtom(s.substring(1), true):
+					LogicaProp.ofAtom(s, false))
+				.collect(Collectors.toSet());
+	}
 	
+	/**
+	 * 
+	 * @param clauseFirst
+	 * @param clauseSecond
+	 * @return The new clause, null if it's not possible to make one
+	 */
+	public static Set<LogicaProp> resolveClausePair(Set<LogicaProp> clauseFirst, Set<LogicaProp> clauseSecond, Boolean silent) {
+		
+		Set<LogicaProp> res = null;
+		if(clausesHaveAnyComplementary(clauseFirst, clauseSecond)) {
+			res = new HashSet<>();
+			LogicaProp atomToRemove = clauseFirst.stream()
+					.filter(atom->clauseSecond.contains(atom.getComplementary()))
+					.findFirst()
+					.orElse(null);
+
+			res.addAll(clauseFirst);
+			res.addAll(clauseSecond);
+			res = res.stream()
+					.filter(atom->!atom.getLabel().equals(atomToRemove.getLabel()))
+					.collect(Collectors.toSet());
+			printStep("  Resolving " + clauseFirst + " and " + clauseSecond + ": " + res,silent);
+		}
+		
+		return res;
+	}
+	
+	public static Boolean clausesHaveAnyComplementary(Set<LogicaProp> clauseFirst, Set<LogicaProp> clauseSecond) {
+		return clauseFirst.stream()
+				.anyMatch(atom->clauseSecond.contains(atom.getComplementary()));
+	}
+	
+	/**
+	 * 
+	 * @param subsuming
+	 * @param subsumer
+	 * @param silent
+	 * @return True if subsumer can subsume the subsuming clause, false otherwise
+	 */
+	public static Boolean canSubsume(Set<LogicaProp> subsuming, Set<LogicaProp> subsumer, Boolean silent) {
+		Boolean res = !subsumer.equals(Set.of()) && subsuming.containsAll(subsumer) && subsuming.size() > subsumer.size();
+		if(res) {
+			printStep("  " + subsuming + " subsumed by " + subsumer, silent);
+		}
+		return res;
+	}
+	
+	public static Boolean resolution(Set<Set<LogicaProp>> clauses, Boolean silent) {
+		return resolutionAux(clauses, silent, new HashMap<>());
+	}
+	
+	public static Boolean resolutionAux(Set<Set<LogicaProp>> clauses, Boolean silent, Map<Set<Set<LogicaProp>>,Set<LogicaProp>> mem) {
+		
+		Boolean res;
+		
+		printStep("Working with clauses: " + clauses, silent);
+		
+		//Get all resulting clauses
+		 Set<Set<LogicaProp>> newClauses = clauses.stream()
+				.flatMap(clause1->clauses
+						.stream()
+						.filter(clause2->!clause1.equals(clause2))
+						//Uses the memory to find the resolution of 2 clauses, adding
+						//new entries if necessary
+						.map(clause2->mem.computeIfAbsent(
+								Set.of(clause1,clause2),
+								s->resolveClausePair(clause1, clause2,silent))))
+				.collect(Collectors.toSet());
+		
+		newClauses.remove(null);
+		
+		//Combines the initial clauses and new clauses, removing duplicates
+		Set<Set<LogicaProp>> allClauses = Stream.concat(clauses.stream(), newClauses.stream())
+				.collect(Collectors.toSet());
+		
+		printStep("Obtained clauses: " + allClauses, silent);
+		
+		//Removes subsumed clauses
+		Set<Set<LogicaProp>> resClauses = allClauses.stream()
+				.filter(clause->allClauses.stream()
+						.noneMatch(subsumer->canSubsume(clause, subsumer, silent)))
+				.collect(Collectors.toSet());
+		
+		
+		
+		//Empty set: Inconsistent
+		if(resClauses.contains(Set.of())) {
+			printStep("Encountered empty clause. Clause set is inconsistent", silent);
+			res = false;
+		//No changes in clauses: Consistent
+		} else if(resClauses.equals(clauses)) {
+			printStep("Clauses have not changed after last iteration. Clause set is consistent.", silent);
+			res = true;
+		//New iteration
+		} else {
+			res = resolutionAux(resClauses, silent, mem);
+		}
+		
+		return res;
+	}
 }

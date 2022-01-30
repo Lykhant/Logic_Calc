@@ -1,6 +1,7 @@
 package parser;
 
 import java.util.Map;
+import java.util.Set;
 
 import functions.LogicaPropUtils;
 
@@ -8,29 +9,22 @@ public class MainParser {
 
 	public static void main(String[] args) {
 		
-		String toParse = "a and b -> c and d";
-		Map<String, Boolean> values = Map.of("a", true, "b", false);
+		String toParse1 = "a and b -> c and d";
+		String toParse2 = "a and b or c and b";
+		LogicaProp parsed1 = LogicaProp.parse(toParse1);
+		LogicaProp parsed2 = LogicaProp.parse(toParse2);
+		System.out.println("Entrada:\n  " + toParse1 + "\n  " + toParse2);
+		System.out.println("Resultado:\n  " + parsed1 + "\n  " + parsed2);
 		
-		LogicaProp parsed = LogicaProp.parse(toParse);
-		System.out.println("Entrada: " + toParse);
-		System.out.println("Resultado: " + parsed + "\n");
-//		LogicaPropUtils.truthTable(parsed);
-////
-//		System.out.println("Is the formula in CNF? " + LogicaPropUtils.isCNF(parsed));
-//		LogicaProp cnf = LogicaPropUtils.toCNF(parsed);
-////
-//		System.out.println("CNF version: " + cnf);
-////		System.out.println(parsed);
-//		System.out.println("Clauses: " + LogicaPropUtils.getClauses(parsed));
-//		
-//		System.out.println(LogicaPropUtils.getClauses(parsed));
-//		System.out.println("\nValues: " + values);
-//		System.out.println("Expression evaluated to: " + parsed.eval(values));
+		Set<LogicaProp> clause1 = LogicaPropUtils.clauseFromString("p,q");
+		Set<LogicaProp> clause2 = LogicaPropUtils.clauseFromString("!p,q");
+		Set<LogicaProp> clause3 = LogicaPropUtils.clauseFromString("p,!q");
+		Set<LogicaProp> clause4 = LogicaPropUtils.clauseFromString("!p,!q");
 		
 		
-		
-		
-		System.out.println(LogicaPropUtils.truthTree(parsed, false));
+		System.out.println("Clauses: " + clause1 + " " + clause2 + " " + clause3 + " " + clause4);
+	
+		System.out.println(LogicaPropUtils.resolution(Set.of(clause1, clause2, clause3, clause4), false).toString());
 	}
 
 }

@@ -28,12 +28,12 @@ public class LogicaProp implements Iterable<LogicaProp> {
 
 
 	//Atom
-	public LogicaProp(String label) {
+	public LogicaProp(String label, Boolean negated) {
 		this.label = label;
 		this.children = List.of();
 		this.type = LogicType.ATOM;
 		this.parent = null;
-		this.negated = false;
+		this.negated = negated;
 	}
 
 	//Operation
@@ -141,8 +141,8 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	 * @param label The string that represents the variable
 	 * @return The new expression in propositional logic
 	 */
-	public static LogicaProp ofAtom(String label) {
-		return new LogicaProp(label);
+	public static LogicaProp ofAtom(String label, Boolean negated) {
+		return new LogicaProp(label, negated);
 	}
 	
 	/**
