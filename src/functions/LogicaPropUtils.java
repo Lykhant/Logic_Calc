@@ -2,7 +2,6 @@ package functions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -521,4 +520,106 @@ public class LogicaPropUtils {
 		
 		return res;
 	}
+	
+	public static Boolean dpll(Set<Set<LogicaProp>> clauses, Boolean silent) {
+		Boolean res = null;
+		Set<Set<LogicaProp>> resClauses = null;
+		
+		printStep("Working with clauses: " + clauses, silent);
+		
+		//Empty set: consistent
+		if(clauses.equals(Set.of())) {
+			printStep("Set of clauses is empty. Set is consistent.", silent);
+			res = true;
+			
+		//Empty clause: inconsistent
+		} else if(clauses.contains(Set.of())) {
+			printStep("Encountered empty clause. Set is inconsistent.", silent);
+			res = false;
+		}
+		
+		Set<Set<LogicaProp>> tautologies = clauses.stream()
+				.filter(clause->clause.stream()
+						.anyMatch(expr->clause.contains(expr.getComplementary())))
+				.collect(Collectors.toSet());
+		Set<Set<LogicaProp>> literals = clauses.stream()
+				.filter(expr->expr.size()==1)
+				.collect(Collectors.toSet());
+		Set<LogicaProp> allAtoms = clauses.stream()
+				.flatMap(clause->clause.stream())
+				.collect(Collectors.toSet());
+		Set<LogicaProp> pureLiterals = allAtoms.stream()
+				.filter(expr->!allAtoms.contains(expr.getComplementary()))
+				.collect(Collectors.toSet());
+		
+		//Remove tautologies
+		if(tautologies.size()>0) {
+			printStep("  Removing tautologies: " + tautologies, silent);
+			resClauses = clauses.stream()
+					.filter(clause->!tautologies.contains(clause))
+					.collect(Collectors.toSet());
+			res = dpll(resClauses, silent);
+			
+			//Unit propagation
+		} else if(literals.size()>0) {
+			//Literal to remove
+			Set<LogicaProp> literal = literals.stream()
+					.findAny()
+					.get();
+			//Expression to remove from other clauses
+			LogicaProp atom = literal.stream()
+					.findAny()
+					.get();
+			
+			printStep("  Unit propagation: " + atom,silent);
+			
+			//Remove the 2 above
+			resClauses = clauses.stream()
+					.filter(clause->!clause.equals(literal))
+					.map(clause->clause.stream()
+							.filter(expr->!expr.equals(atom.getComplementary()))
+							.collect(Collectors.toSet()))
+					.collect(Collectors.toSet());
+			res = dpll(resClauses, silent);
+			
+		//Pure literal elimination
+		} else if(pureLiterals.size()>0) {
+			LogicaProp pureLiteral = pureLiterals.stream()
+					.findAny()
+					.get();
+			
+			printStep("  Pure literal elimination: " + pureLiteral, silent);
+			
+			resClauses = clauses.stream()
+					.filter(clause->!clause.contains(pureLiteral))
+					.collect(Collectors.toSet());
+			res = dpll(resClauses, silent);
+			
+		
+		
+			
+		//Division rule if all fails
+		} else {
+			LogicaProp atom = allAtoms.stream()
+					.findAny()
+					.get();
+			
+			//Division rule
+			printStep("Could not operate on clause set. Applying division rule with literal: " + atom, silent);
+			res = dpll(Stream.concat(clauses.stream(), Set.of(Set.of(atom)).stream())
+						.collect(Collectors.toSet()),
+						silent) || 
+					dpll(Stream.concat(clauses.stream(), Set.of(Set.of(atom.getComplementary())).stream())
+							.collect(Collectors.toSet()),
+							silent);
+			if(res) {
+				printStep("Division rule successful.", silent);
+			} else {
+				printStep("Division rule unsuccessful.", silent);
+			}
+		}
+		
+		return res;
+	}
+	
 }
