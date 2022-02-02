@@ -15,20 +15,20 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class LogicaProp implements Iterable<LogicaProp> {
+public class PropLogic implements Iterable<PropLogic> {
 
 	public static enum LogicType {CONJUNCTION, DISJUNCTION, IMPLICATION, BICONDITIONAL, ATOM}	
 
 	
 	protected String label;
 	private LogicType type;
-	protected List<LogicaProp> children;
+	protected List<PropLogic> children;
 	protected Boolean negated;
-	protected LogicaProp parent;
+	protected PropLogic parent;
 
 
 	//Atom
-	public LogicaProp(String label, Boolean negated) {
+	public PropLogic(String label, Boolean negated) {
 		this.label = label;
 		this.children = List.of();
 		this.type = LogicType.ATOM;
@@ -37,7 +37,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	}
 
 	//Operation
-	private LogicaProp(LogicaProp left, String label, LogicaProp right) {
+	private PropLogic(PropLogic left, String label, PropLogic right) {
 		
 		switch (label) {
 		case "->":
@@ -88,7 +88,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		}
 	}
 
-	private LogicaProp(LogicaProp logicaProp) {
+	private PropLogic(PropLogic logicaProp) {
 		this.label = logicaProp.getLabel();
 		this.type = logicaProp.getType();
 		//To avoid endless recursion, the parent is set to null
@@ -108,14 +108,14 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	 * @param s String to parse
 	 * @return The parsed logic expression 
 	 */
-	public static LogicaProp parse(String s) {
+	public static PropLogic parse(String s) {
 
 		CharStream stream = CharStreams.fromString(s);
-		LogicaLexer lexer = new LogicaLexer(stream);
+		PropLogicLexer lexer = new PropLogicLexer(stream);
 		TokenStream tokens = new CommonTokenStream(lexer);
-		LogicaParser parser = new LogicaParser(tokens);
+		PropLogicParser parser = new PropLogicParser(tokens);
 		ParseTree parseTree = parser.expr();
-		LogicaProp res = parseTree.accept(new LogicaVisitorC());
+		PropLogic res = parseTree.accept(new PropLogicVisitorC());
 
 		return res;
 	}
@@ -131,8 +131,8 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	 */
 	
 	//TODO: Change from taking String to the LogicType enumerate
-	public static LogicaProp ofOp(LogicaProp leftChild, String op, LogicaProp rightChild) {
-		return new LogicaProp(leftChild, op, rightChild);
+	public static PropLogic ofOp(PropLogic leftChild, String op, PropLogic rightChild) {
+		return new PropLogic(leftChild, op, rightChild);
 	}
 
 	/**
@@ -141,16 +141,16 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	 * @param label The string that represents the variable
 	 * @return The new expression in propositional logic
 	 */
-	public static LogicaProp ofAtom(String label, Boolean negated) {
-		return new LogicaProp(label, negated);
+	public static PropLogic ofAtom(String label, Boolean negated) {
+		return new PropLogic(label, negated);
 	}
 	
 	/**
 	 * Creates a deep copy of the given logic expression.
 	 * @return The copied logic expression
 	 */
-	public LogicaProp getCopy() {
-		return new LogicaProp(this);
+	public PropLogic getCopy() {
+		return new PropLogic(this);
 	}
 
 	public String getLabel() {
@@ -161,7 +161,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		return this.negated;
 	}
 
-	public LogicaProp negate() {
+	public PropLogic negate() {
 		negated = !negated;
 		return this;
 	}
@@ -229,17 +229,17 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		}
 	}
 	
-	public void setChildren(LogicaProp leftChild, LogicaProp rightChild) {
+	public void setChildren(PropLogic leftChild, PropLogic rightChild) {
 		this.children = List.of(leftChild, rightChild);
 		leftChild.setParent(this);
 		rightChild.setParent(this);
 	}
 	
-	public LogicaProp getLeft() {
+	public PropLogic getLeft() {
 		return this.children.get(0);
 	}
 
-	public LogicaProp getRight() {
+	public PropLogic getRight() {
 		return this.children.get(1);
 	}
 
@@ -251,8 +251,8 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	 * Creates a copy of the expression and negates it
 	 * @return The negated expression
 	 */
-	public LogicaProp getComplementary() {
-		LogicaProp res = this.getCopy();
+	public PropLogic getComplementary() {
+		PropLogic res = this.getCopy();
 		res.setNegated(!this.negated);
 		return res;
 	}
@@ -261,7 +261,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		this.negated = neg;
 	}
 	
-	public LogicaProp setParent(LogicaProp father) {
+	public PropLogic setParent(PropLogic father) {
 		this.parent = father;
 		return this;
 	}
@@ -270,7 +270,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		return this.parent != null;
 	}
 
-	public LogicaProp getFather() {
+	public PropLogic getFather() {
 		return this.parent;
 	}
 
@@ -282,7 +282,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		return this.hasFather() && this.parent.getRight() == this;
 	}
 
-	public List<LogicaProp> getChildren() {
+	public List<PropLogic> getChildren() {
 		return this.children;
 	}
 
@@ -311,26 +311,26 @@ public class LogicaProp implements Iterable<LogicaProp> {
 	
 	//Depth-first iterator
 	@Override
-	public Iterator<LogicaProp> iterator() {
+	public Iterator<PropLogic> iterator() {
 		return DepthPathLogicaProp.of(this);
 	}
 	
-	public Stream<LogicaProp> stream() {
-		Iterator<LogicaProp> iter = DepthPathLogicaProp.of(this);
-		List<LogicaProp> list = new ArrayList<>();
+	public Stream<PropLogic> stream() {
+		Iterator<PropLogic> iter = DepthPathLogicaProp.of(this);
+		List<PropLogic> list = new ArrayList<>();
 		iter.forEachRemaining(i->list.add(i));
 		return list.stream();
 	}
 	
-	public static class DepthPathLogicaProp implements Iterator<LogicaProp>{
+	public static class DepthPathLogicaProp implements Iterator<PropLogic>{
 
-		public static DepthPathLogicaProp of(LogicaProp logic) {
+		public static DepthPathLogicaProp of(PropLogic logic) {
 			return new DepthPathLogicaProp(logic);
 		}
 		
-		Stack<LogicaProp> stack;
+		Stack<PropLogic> stack;
 		
-		public DepthPathLogicaProp(LogicaProp logic) {
+		public DepthPathLogicaProp(PropLogic logic) {
 			this.stack = new Stack<>();
 			this.stack.add(logic);
 		}
@@ -342,9 +342,9 @@ public class LogicaProp implements Iterable<LogicaProp> {
 		}
 
 		@Override
-		public LogicaProp next() {
+		public PropLogic next() {
 			// TODO Auto-generated method stub
-			LogicaProp current = stack.pop();
+			PropLogic current = stack.pop();
 			if(!current.isAtom()) {
 				stack.add(current.getLeft());
 				stack.add(current.getRight());
@@ -369,7 +369,7 @@ public class LogicaProp implements Iterable<LogicaProp> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		LogicaProp other = (LogicaProp) obj;
+		PropLogic other = (PropLogic) obj;
 		return Objects.equals(children, other.children) && Objects.equals(label, other.label)
 				&& Objects.equals(negated, other.negated) && type == other.type;
 	}

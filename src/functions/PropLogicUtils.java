@@ -10,17 +10,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import parser.LogicaProp;
-import parser.LogicaProp.LogicType;
+import parser.PropLogic;
+import parser.PropLogic.LogicType;
 
-public class LogicaPropUtils {
+public class PropLogicUtils {
 	
 	/**
 	 * Gets all the operations contained in the logic expression
 	 * @param input The expression to get the operations from
 	 * @return A Set containing all the operations
 	 */
-	public static Set<LogicaProp> opSet(LogicaProp input) {
+	public static Set<PropLogic> opSet(PropLogic input) {
 		return input.stream()
 				.filter(e->!e.isAtom())
 				.collect(Collectors.toSet());
@@ -31,7 +31,7 @@ public class LogicaPropUtils {
 	 * @param input The expression to get the atoms from
 	 * @return A Set containing all the atoms
 	 */
-	public static Set<LogicaProp> atomSet(LogicaProp input) {
+	public static Set<PropLogic> atomSet(PropLogic input) {
 		return input.stream()
 				.filter(expr->expr.isAtom())
 				.collect(Collectors.toSet());
@@ -54,7 +54,7 @@ public class LogicaPropUtils {
 	 * @param input The expression to check
 	 * @return A Boolean representing whether the expression is in CNF or not
 	 */
-	public static Boolean isCNF(LogicaProp input) {
+	public static Boolean isCNF(PropLogic input) {
 		
 		//Skip other calculations if the expression is a negated operation
 		Boolean res = input.isAtom() || !input.isNegated();
@@ -86,9 +86,9 @@ public class LogicaPropUtils {
 	 * @param input The expression to modify
 	 * @return A copy of the expression in CNF
 	 */
-	public static LogicaProp toCNF(LogicaProp input) {
+	public static PropLogic toCNF(PropLogic input) {
 		//Copy that will be modified to CNF
-		LogicaProp inputCopy = input.getCopy();
+		PropLogic inputCopy = input.getCopy();
 		
 		//The expression is returned after applying all needed changes
 		if(!isCNF(inputCopy)) {
@@ -103,25 +103,25 @@ public class LogicaPropUtils {
 					
 					//Distribution law:
 					//Obtaining the children of the contained expressions
-					List<LogicaProp> leftChildren = inputCopy.getLeft().isAtom()||
+					List<PropLogic> leftChildren = inputCopy.getLeft().isAtom()||
 							inputCopy.getLeft().getType() == LogicType.DISJUNCTION?
 									List.of(inputCopy.getLeft()):
 									inputCopy.getLeft().getChildren();
-					List<LogicaProp> rightChildren = inputCopy.getRight().isAtom() ||
+					List<PropLogic> rightChildren = inputCopy.getRight().isAtom() ||
 							inputCopy.getRight().getType() == LogicType.DISJUNCTION?
 							List.of(inputCopy.getRight()):
 							inputCopy.getRight().getChildren();
 					
-					List<LogicaProp> zipped = new ArrayList<>();
+					List<PropLogic> zipped = new ArrayList<>();
 					//Combining each child with its counterpart in the list through
 					//a new disjunction
 					leftChildren.stream()
 						.forEach(l->rightChildren.stream()
-								.forEach(r->zipped.add(LogicaProp.ofOp(l, "or", r))));
+								.forEach(r->zipped.add(PropLogic.ofOp(l, "or", r))));
 					
 					//Combine all disjunctions into conjunctions
 					inputCopy = zipped.stream()
-						.reduce((l1, l2) -> LogicaProp.ofOp(l1, "and", l2))
+						.reduce((l1, l2) -> PropLogic.ofOp(l1, "and", l2))
 						.get();
 					
 				} else {
@@ -149,11 +149,11 @@ public class LogicaPropUtils {
 				break;
 			case BICONDITIONAL: 
 				//Convert into conjunction of implications of both children
-				List<LogicaProp> children = inputCopy.getChildren();
+				List<PropLogic> children = inputCopy.getChildren();
 				inputCopy.setType(LogicType.CONJUNCTION);
 				inputCopy.setChildren(
-						LogicaProp.ofOp(children.get(0).getCopy().negate(), "or", children.get(1).getCopy()),
-						LogicaProp.ofOp(children.get(1).negate(), "or", children.get(0)));
+						PropLogic.ofOp(children.get(0).getCopy().negate(), "or", children.get(1).getCopy()),
+						PropLogic.ofOp(children.get(1).negate(), "or", children.get(0)));
 				toCNF(inputCopy);
 				break;
 			case IMPLICATION: 
@@ -172,7 +172,7 @@ public class LogicaPropUtils {
 	 * Print the truth table of a given logic expression.
 	 * @param input
 	 */
-	public static void truthTable(LogicaProp input) {
+	public static void truthTable(PropLogic input) {
 		
 		List<String> atoms = atomSet(input).stream()
 				.map(expr->expr.getLabel())
@@ -220,7 +220,7 @@ public class LogicaPropUtils {
 	 * @param input The expression to check
 	 * @return Whether the expression is an alpha expression or not
 	 */
-	public static Boolean isAlpha(LogicaProp input) {
+	public static Boolean isAlpha(PropLogic input) {
 		Boolean res = false;
 		
 		switch (input.getType()) {
@@ -248,15 +248,15 @@ public class LogicaPropUtils {
 	 * @param silent Whether the calculation steps should be printed or not
 	 * @return A Set including the resulting branch(es)
 	 */
-	public static Set<Set<LogicaProp>> truthTreeOp(Set<LogicaProp> branch, Boolean silent) {
+	public static Set<Set<PropLogic>> truthTreeOp(Set<PropLogic> branch, Boolean silent) {
 		
 		printStep("  Operating on branch: " + branch,silent);
 		
-		Set<Set<LogicaProp>> resBranches = Set.of(branch);
+		Set<Set<PropLogic>> resBranches = Set.of(branch);
 		
 		//Find first alpha operation in the branch
 		//If there are no branches, find the first beta operation
-		LogicaProp toOperate = branch.stream()
+		PropLogic toOperate = branch.stream()
 				.filter(expr->isAlpha(expr))
 				.findFirst()
 				.orElse(branch.stream()
@@ -267,7 +267,7 @@ public class LogicaPropUtils {
 		if(toOperate != null) {
 		
 			printStep("    Chosen expression: " + toOperate,silent);
-			List<LogicaProp> components = List.of();
+			List<PropLogic> components = List.of();
 			//Get components of the expression
 			switch (toOperate.getType()) {
 			//(A and B), (A or B): A, B
@@ -280,8 +280,8 @@ public class LogicaPropUtils {
 			//(A <-> B): (A -> B),(B -> A)
 			case BICONDITIONAL:
 				 components = List.of(
-						 LogicaProp.ofOp(toOperate.getLeft().getCopy(), "->", toOperate.getRight().getCopy()),
-						 LogicaProp.ofOp(toOperate.getRight(), "->", toOperate.getLeft()));
+						 PropLogic.ofOp(toOperate.getLeft().getCopy(), "->", toOperate.getRight().getCopy()),
+						 PropLogic.ofOp(toOperate.getRight(), "->", toOperate.getLeft()));
 				break;
 			//(A -> B): !A, B
 			case IMPLICATION:
@@ -302,7 +302,7 @@ public class LogicaPropUtils {
 					}
 			 
 			//List to be used when mapping values
-			final List<LogicaProp> finalComponents = components;
+			final List<PropLogic> finalComponents = components;
 			 
 			if (isAlpha(toOperate)) {
 				
@@ -356,11 +356,11 @@ public class LogicaPropUtils {
 	 * @param silent Whether steps should be printed on console or not
 	 * @return All the clauses resulting from the truth tree
 	 */
-	public static Set<Set<LogicaProp>> truthTree(Set<LogicaProp> input, Boolean silent) {
+	public static Set<Set<PropLogic>> truthTree(Set<PropLogic> input, Boolean silent) {
 		
 		printStep("Making truth tree of: " + input, silent);
 		
-		Set<Set<LogicaProp>> trTree = Stream.iterate(
+		Set<Set<PropLogic>> trTree = Stream.iterate(
 				//Start with a set that will contain all branches
 				//(sets of expressions)
 				Set.of(input),
@@ -387,20 +387,20 @@ public class LogicaPropUtils {
 	 * @param silent Whether each step should be printed on console or not
 	 * @return All the clauses resulting from the truth tree
 	 */
-	public static Set<Set<LogicaProp>> truthTree(LogicaProp input, Boolean silent) {
+	public static Set<Set<PropLogic>> truthTree(PropLogic input, Boolean silent) {
 		return truthTree(Set.of(input), silent);
 	}
 
-	public static Set<Set<LogicaProp>> getClauses(LogicaProp input) {
-		LogicaProp CNF = toCNF(input);
-		Set<LogicaProp> disjunctions = CNF.stream()
+	public static Set<Set<PropLogic>> getClauses(PropLogic input) {
+		PropLogic CNF = toCNF(input);
+		Set<PropLogic> disjunctions = CNF.stream()
 			.filter(expr->expr.getType()==LogicType.DISJUNCTION ||
 				expr.isAtom())
 			.collect(Collectors.toSet());
 		
 		//Gets the disjunctions and atoms that are not a child of another
 		//Afterwards, gets their atoms
-		Set<Set<LogicaProp>> clauses = disjunctions.stream()
+		Set<Set<PropLogic>> clauses = disjunctions.stream()
 				.filter(expr->disjunctions.stream()
 						.noneMatch(expr2->expr2.getChildren().contains(expr)))
 				.map(expr->atomSet(expr))
@@ -409,14 +409,14 @@ public class LogicaPropUtils {
 		return clauses;
 	}
 	
-	public static Set<LogicaProp> clauseFromString(String atomLine) {
+	public static Set<PropLogic> clauseFromString(String atomLine) {
 		String[] atoms = atomLine.replace(" ", "").split(",");
 		
 		return Arrays.stream(atoms)
 				.filter(s->s.length()<=2)
 				.map(s->s.charAt(0) == '!'? 
-					LogicaProp.ofAtom(s.substring(1), true):
-					LogicaProp.ofAtom(s, false))
+					PropLogic.ofAtom(s.substring(1), true):
+					PropLogic.ofAtom(s, false))
 				.collect(Collectors.toSet());
 	}
 	
@@ -426,12 +426,12 @@ public class LogicaPropUtils {
 	 * @param clauseSecond
 	 * @return The new clause, null if it's not possible to make one
 	 */
-	public static Set<LogicaProp> resolveClausePair(Set<LogicaProp> clauseFirst, Set<LogicaProp> clauseSecond, Boolean silent) {
+	public static Set<PropLogic> resolveClausePair(Set<PropLogic> clauseFirst, Set<PropLogic> clauseSecond, Boolean silent) {
 		
-		Set<LogicaProp> res = null;
+		Set<PropLogic> res = null;
 		if(clausesHaveAnyComplementary(clauseFirst, clauseSecond)) {
 			res = new HashSet<>();
-			LogicaProp atomToRemove = clauseFirst.stream()
+			PropLogic atomToRemove = clauseFirst.stream()
 					.filter(atom->clauseSecond.contains(atom.getComplementary()))
 					.findFirst()
 					.orElse(null);
@@ -447,7 +447,7 @@ public class LogicaPropUtils {
 		return res;
 	}
 	
-	public static Boolean clausesHaveAnyComplementary(Set<LogicaProp> clauseFirst, Set<LogicaProp> clauseSecond) {
+	public static Boolean clausesHaveAnyComplementary(Set<PropLogic> clauseFirst, Set<PropLogic> clauseSecond) {
 		return clauseFirst.stream()
 				.anyMatch(atom->clauseSecond.contains(atom.getComplementary()));
 	}
@@ -459,7 +459,7 @@ public class LogicaPropUtils {
 	 * @param silent
 	 * @return True if subsumer can subsume the subsuming clause, false otherwise
 	 */
-	public static Boolean canSubsume(Set<LogicaProp> subsuming, Set<LogicaProp> subsumer, Boolean silent) {
+	public static Boolean canSubsume(Set<PropLogic> subsuming, Set<PropLogic> subsumer, Boolean silent) {
 		Boolean res = !subsumer.equals(Set.of()) && subsuming.containsAll(subsumer) && subsuming.size() > subsumer.size();
 		if(res) {
 			printStep("  " + subsuming + " subsumed by " + subsumer, silent);
@@ -467,18 +467,18 @@ public class LogicaPropUtils {
 		return res;
 	}
 	
-	public static Boolean resolution(Set<Set<LogicaProp>> clauses, Boolean silent) {
+	public static Boolean resolution(Set<Set<PropLogic>> clauses, Boolean silent) {
 		return resolutionAux(clauses, silent, new HashMap<>());
 	}
 	
-	public static Boolean resolutionAux(Set<Set<LogicaProp>> clauses, Boolean silent, Map<Set<Set<LogicaProp>>,Set<LogicaProp>> mem) {
+	public static Boolean resolutionAux(Set<Set<PropLogic>> clauses, Boolean silent, Map<Set<Set<PropLogic>>,Set<PropLogic>> mem) {
 		
 		Boolean res;
 		
 		printStep("Working with clauses: " + clauses, silent);
 		
 		//Get all resulting clauses
-		 Set<Set<LogicaProp>> newClauses = clauses.stream()
+		 Set<Set<PropLogic>> newClauses = clauses.stream()
 				.flatMap(clause1->clauses
 						.stream()
 						.filter(clause2->!clause1.equals(clause2))
@@ -492,13 +492,13 @@ public class LogicaPropUtils {
 		newClauses.remove(null);
 		
 		//Combines the initial clauses and new clauses, removing duplicates
-		Set<Set<LogicaProp>> allClauses = Stream.concat(clauses.stream(), newClauses.stream())
+		Set<Set<PropLogic>> allClauses = Stream.concat(clauses.stream(), newClauses.stream())
 				.collect(Collectors.toSet());
 		
 		printStep("Obtained clauses: " + allClauses, silent);
 		
 		//Removes subsumed clauses
-		Set<Set<LogicaProp>> resClauses = allClauses.stream()
+		Set<Set<PropLogic>> resClauses = allClauses.stream()
 				.filter(clause->allClauses.stream()
 						.noneMatch(subsumer->canSubsume(clause, subsumer, silent)))
 				.collect(Collectors.toSet());
@@ -521,11 +521,25 @@ public class LogicaPropUtils {
 		return res;
 	}
 	
-	public static Boolean dpll(Set<Set<LogicaProp>> clauses, Boolean silent) {
+	public static Boolean dpll(Set<Set<PropLogic>> clauses, Boolean silent) {
 		Boolean res = null;
-		Set<Set<LogicaProp>> resClauses = null;
+		Set<Set<PropLogic>> resClauses = null;
 		
 		printStep("Working with clauses: " + clauses, silent);
+		
+		Set<Set<PropLogic>> tautologies = clauses.stream()
+				.filter(clause->clause.stream()
+						.anyMatch(expr->clause.contains(expr.getComplementary())))
+				.collect(Collectors.toSet());
+		Set<Set<PropLogic>> literals = clauses.stream()
+				.filter(expr->expr.size()==1)
+				.collect(Collectors.toSet());
+		Set<PropLogic> allAtoms = clauses.stream()
+				.flatMap(clause->clause.stream())
+				.collect(Collectors.toSet());
+		Set<PropLogic> pureLiterals = allAtoms.stream()
+				.filter(expr->!allAtoms.contains(expr.getComplementary()))
+				.collect(Collectors.toSet());
 		
 		//Empty set: consistent
 		if(clauses.equals(Set.of())) {
@@ -536,38 +550,24 @@ public class LogicaPropUtils {
 		} else if(clauses.contains(Set.of())) {
 			printStep("Encountered empty clause. Set is inconsistent.", silent);
 			res = false;
-		}
 		
-		Set<Set<LogicaProp>> tautologies = clauses.stream()
-				.filter(clause->clause.stream()
-						.anyMatch(expr->clause.contains(expr.getComplementary())))
-				.collect(Collectors.toSet());
-		Set<Set<LogicaProp>> literals = clauses.stream()
-				.filter(expr->expr.size()==1)
-				.collect(Collectors.toSet());
-		Set<LogicaProp> allAtoms = clauses.stream()
-				.flatMap(clause->clause.stream())
-				.collect(Collectors.toSet());
-		Set<LogicaProp> pureLiterals = allAtoms.stream()
-				.filter(expr->!allAtoms.contains(expr.getComplementary()))
-				.collect(Collectors.toSet());
-		
+		//Operating:	
 		//Remove tautologies
-		if(tautologies.size()>0) {
+		} else if(tautologies.size()>0) {
 			printStep("  Removing tautologies: " + tautologies, silent);
 			resClauses = clauses.stream()
 					.filter(clause->!tautologies.contains(clause))
 					.collect(Collectors.toSet());
 			res = dpll(resClauses, silent);
 			
-			//Unit propagation
+		//Unit propagation
 		} else if(literals.size()>0) {
 			//Literal to remove
-			Set<LogicaProp> literal = literals.stream()
+			Set<PropLogic> literal = literals.stream()
 					.findAny()
 					.get();
 			//Expression to remove from other clauses
-			LogicaProp atom = literal.stream()
+			PropLogic atom = literal.stream()
 					.findAny()
 					.get();
 			
@@ -584,7 +584,7 @@ public class LogicaPropUtils {
 			
 		//Pure literal elimination
 		} else if(pureLiterals.size()>0) {
-			LogicaProp pureLiteral = pureLiterals.stream()
+			PropLogic pureLiteral = pureLiterals.stream()
 					.findAny()
 					.get();
 			
@@ -595,12 +595,9 @@ public class LogicaPropUtils {
 					.collect(Collectors.toSet());
 			res = dpll(resClauses, silent);
 			
-		
-		
-			
-		//Division rule if all fails
+		//Division rule if all else fails
 		} else {
-			LogicaProp atom = allAtoms.stream()
+			PropLogic atom = allAtoms.stream()
 					.findAny()
 					.get();
 			
@@ -613,9 +610,9 @@ public class LogicaPropUtils {
 							.collect(Collectors.toSet()),
 							silent);
 			if(res) {
-				printStep("Division rule successful.", silent);
+				printStep("Division rule successful. Clause set is consistent.", silent);
 			} else {
-				printStep("Division rule unsuccessful.", silent);
+				printStep("Division rule unsuccessful. Clause set is inconsistent.", silent);
 			}
 		}
 		

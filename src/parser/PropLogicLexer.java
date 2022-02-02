@@ -1,5 +1,5 @@
 package parser;
-// Generated from Logica.g4 by ANTLR 4.9.3
+// Generated from PropLogic.g4 by ANTLR 4.9.3
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
@@ -10,15 +10,15 @@ import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
-public class LogicaLexer extends Lexer {
+public class PropLogicLexer extends Lexer {
 	static { RuntimeMetaData.checkVersion("4.9.3", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, ELEMENTO=3, BICONDICIONAL=4, IMPLICA=5, AND=6, OR=7, NOT=8, 
-		WS=9;
+		T__0=1, T__1=2, ELEMENT=3, BICONDITIONAL=4, IMPLICATION=5, AND=6, OR=7, 
+		NOT=8, WS=9;
 	public static String[] channelNames = {
 		"DEFAULT_TOKEN_CHANNEL", "HIDDEN"
 	};
@@ -29,7 +29,7 @@ public class LogicaLexer extends Lexer {
 
 	private static String[] makeRuleNames() {
 		return new String[] {
-			"T__0", "T__1", "ELEMENTO", "BICONDICIONAL", "IMPLICA", "AND", "OR", 
+			"T__0", "T__1", "ELEMENT", "BICONDITIONAL", "IMPLICATION", "AND", "OR", 
 			"NOT", "WS"
 		};
 	}
@@ -43,7 +43,7 @@ public class LogicaLexer extends Lexer {
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, null, null, "ELEMENTO", "BICONDICIONAL", "IMPLICA", "AND", "OR", 
+			null, null, null, "ELEMENT", "BICONDITIONAL", "IMPLICATION", "AND", "OR", 
 			"NOT", "WS"
 		};
 	}
@@ -82,13 +82,13 @@ public class LogicaLexer extends Lexer {
 	}
 
 
-	public LogicaLexer(CharStream input) {
+	public PropLogicLexer(CharStream input) {
 		super(input);
 		_interp = new LexerATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
 
 	@Override
-	public String getGrammarFileName() { return "Logica.g4"; }
+	public String getGrammarFileName() { return "PropLogic.g4"; }
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }

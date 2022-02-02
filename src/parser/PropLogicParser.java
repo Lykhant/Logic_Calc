@@ -1,5 +1,5 @@
 package parser;
-// Generated from Logica.g4 by ANTLR 4.9.3
+// Generated from PropLogic.g4 by ANTLR 4.9.3
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
@@ -10,15 +10,15 @@ import java.util.Iterator;
 import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
-public class LogicaParser extends Parser {
+public class PropLogicParser extends Parser {
 	static { RuntimeMetaData.checkVersion("4.9.3", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		T__0=1, T__1=2, ELEMENTO=3, BICONDICIONAL=4, IMPLICA=5, AND=6, OR=7, NOT=8, 
-		WS=9;
+		T__0=1, T__1=2, ELEMENT=3, BICONDITIONAL=4, IMPLICATION=5, AND=6, OR=7, 
+		NOT=8, WS=9;
 	public static final int
 		RULE_expr = 0;
 	private static String[] makeRuleNames() {
@@ -36,7 +36,7 @@ public class LogicaParser extends Parser {
 	private static final String[] _LITERAL_NAMES = makeLiteralNames();
 	private static String[] makeSymbolicNames() {
 		return new String[] {
-			null, null, null, "ELEMENTO", "BICONDICIONAL", "IMPLICA", "AND", "OR", 
+			null, null, null, "ELEMENT", "BICONDITIONAL", "IMPLICATION", "AND", "OR", 
 			"NOT", "WS"
 		};
 	}
@@ -75,7 +75,7 @@ public class LogicaParser extends Parser {
 	}
 
 	@Override
-	public String getGrammarFileName() { return "Logica.g4"; }
+	public String getGrammarFileName() { return "PropLogic.g4"; }
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }
@@ -86,7 +86,7 @@ public class LogicaParser extends Parser {
 	@Override
 	public ATN getATN() { return _ATN; }
 
-	public LogicaParser(TokenStream input) {
+	public PropLogicParser(TokenStream input) {
 		super(input);
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
@@ -102,26 +102,19 @@ public class LogicaParser extends Parser {
 			super.copyFrom(ctx);
 		}
 	}
-	public static class ParentesisContext extends ExprContext {
+	public static class NegatedContext extends ExprContext {
+		public TerminalNode NOT() { return getToken(PropLogicParser.NOT, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
-		public ParentesisContext(ExprContext ctx) { copyFrom(ctx); }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).enterParentesis(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).exitParentesis(this);
-		}
+		public NegatedContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof LogicaVisitor ) return ((LogicaVisitor<? extends T>)visitor).visitParentesis(this);
+			if ( visitor instanceof PropLogicVisitor ) return ((PropLogicVisitor<? extends T>)visitor).visitNegated(this);
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class ImplicacionesContext extends ExprContext {
+	public static class ImplicationsContext extends ExprContext {
 		public ExprContext left;
 		public ExprContext right;
 		public List<ExprContext> expr() {
@@ -130,44 +123,16 @@ public class LogicaParser extends Parser {
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode IMPLICA() { return getToken(LogicaParser.IMPLICA, 0); }
-		public TerminalNode BICONDICIONAL() { return getToken(LogicaParser.BICONDICIONAL, 0); }
-		public ImplicacionesContext(ExprContext ctx) { copyFrom(ctx); }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).enterImplicaciones(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).exitImplicaciones(this);
-		}
+		public TerminalNode IMPLICATION() { return getToken(PropLogicParser.IMPLICATION, 0); }
+		public TerminalNode BICONDITIONAL() { return getToken(PropLogicParser.BICONDITIONAL, 0); }
+		public ImplicationsContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof LogicaVisitor ) return ((LogicaVisitor<? extends T>)visitor).visitImplicaciones(this);
+			if ( visitor instanceof PropLogicVisitor ) return ((PropLogicVisitor<? extends T>)visitor).visitImplications(this);
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class NegadoContext extends ExprContext {
-		public TerminalNode NOT() { return getToken(LogicaParser.NOT, 0); }
-		public ExprContext expr() {
-			return getRuleContext(ExprContext.class,0);
-		}
-		public NegadoContext(ExprContext ctx) { copyFrom(ctx); }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).enterNegado(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).exitNegado(this);
-		}
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof LogicaVisitor ) return ((LogicaVisitor<? extends T>)visitor).visitNegado(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-	public static class ConjDisyuncionContext extends ExprContext {
+	public static class ConjDisjunctionContext extends ExprContext {
 		public ExprContext left;
 		public ExprContext right;
 		public List<ExprContext> expr() {
@@ -176,38 +141,33 @@ public class LogicaParser extends Parser {
 		public ExprContext expr(int i) {
 			return getRuleContext(ExprContext.class,i);
 		}
-		public TerminalNode AND() { return getToken(LogicaParser.AND, 0); }
-		public TerminalNode OR() { return getToken(LogicaParser.OR, 0); }
-		public ConjDisyuncionContext(ExprContext ctx) { copyFrom(ctx); }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).enterConjDisyuncion(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).exitConjDisyuncion(this);
-		}
+		public TerminalNode AND() { return getToken(PropLogicParser.AND, 0); }
+		public TerminalNode OR() { return getToken(PropLogicParser.OR, 0); }
+		public ConjDisjunctionContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof LogicaVisitor ) return ((LogicaVisitor<? extends T>)visitor).visitConjDisyuncion(this);
+			if ( visitor instanceof PropLogicVisitor ) return ((PropLogicVisitor<? extends T>)visitor).visitConjDisjunction(this);
 			else return visitor.visitChildren(this);
 		}
 	}
-	public static class FAtomicaContext extends ExprContext {
+	public static class AtomContext extends ExprContext {
 		public Token atom;
-		public TerminalNode ELEMENTO() { return getToken(LogicaParser.ELEMENTO, 0); }
-		public FAtomicaContext(ExprContext ctx) { copyFrom(ctx); }
-		@Override
-		public void enterRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).enterFAtomica(this);
-		}
-		@Override
-		public void exitRule(ParseTreeListener listener) {
-			if ( listener instanceof LogicaListener ) ((LogicaListener)listener).exitFAtomica(this);
-		}
+		public TerminalNode ELEMENT() { return getToken(PropLogicParser.ELEMENT, 0); }
+		public AtomContext(ExprContext ctx) { copyFrom(ctx); }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof LogicaVisitor ) return ((LogicaVisitor<? extends T>)visitor).visitFAtomica(this);
+			if ( visitor instanceof PropLogicVisitor ) return ((PropLogicVisitor<? extends T>)visitor).visitAtom(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+	public static class ParenthesisContext extends ExprContext {
+		public ExprContext expr() {
+			return getRuleContext(ExprContext.class,0);
+		}
+		public ParenthesisContext(ExprContext ctx) { copyFrom(ctx); }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof PropLogicVisitor ) return ((PropLogicVisitor<? extends T>)visitor).visitParenthesis(this);
 			else return visitor.visitChildren(this);
 		}
 	}
@@ -233,7 +193,7 @@ public class LogicaParser extends Parser {
 			switch (_input.LA(1)) {
 			case NOT:
 				{
-				_localctx = new NegadoContext(_localctx);
+				_localctx = new NegatedContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
 
@@ -245,7 +205,7 @@ public class LogicaParser extends Parser {
 				break;
 			case T__0:
 				{
-				_localctx = new ParentesisContext(_localctx);
+				_localctx = new ParenthesisContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
 				setState(5);
@@ -256,13 +216,13 @@ public class LogicaParser extends Parser {
 				match(T__1);
 				}
 				break;
-			case ELEMENTO:
+			case ELEMENT:
 				{
-				_localctx = new FAtomicaContext(_localctx);
+				_localctx = new AtomContext(_localctx);
 				_ctx = _localctx;
 				_prevctx = _localctx;
 				setState(9);
-				((FAtomicaContext)_localctx).atom = match(ELEMENTO);
+				((AtomContext)_localctx).atom = match(ELEMENT);
 				}
 				break;
 			default:
@@ -282,8 +242,8 @@ public class LogicaParser extends Parser {
 					switch ( getInterpreter().adaptivePredict(_input,1,_ctx) ) {
 					case 1:
 						{
-						_localctx = new ConjDisyuncionContext(new ExprContext(_parentctx, _parentState));
-						((ConjDisyuncionContext)_localctx).left = _prevctx;
+						_localctx = new ConjDisjunctionContext(new ExprContext(_parentctx, _parentState));
+						((ConjDisjunctionContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expr);
 						setState(12);
 						if (!(precpred(_ctx, 3))) throw new FailedPredicateException(this, "precpred(_ctx, 3)");
@@ -298,19 +258,19 @@ public class LogicaParser extends Parser {
 							consume();
 						}
 						setState(14);
-						((ConjDisyuncionContext)_localctx).right = expr(3);
+						((ConjDisjunctionContext)_localctx).right = expr(3);
 						}
 						break;
 					case 2:
 						{
-						_localctx = new ImplicacionesContext(new ExprContext(_parentctx, _parentState));
-						((ImplicacionesContext)_localctx).left = _prevctx;
+						_localctx = new ImplicationsContext(new ExprContext(_parentctx, _parentState));
+						((ImplicationsContext)_localctx).left = _prevctx;
 						pushNewRecursionContext(_localctx, _startState, RULE_expr);
 						setState(15);
 						if (!(precpred(_ctx, 2))) throw new FailedPredicateException(this, "precpred(_ctx, 2)");
 						setState(16);
 						_la = _input.LA(1);
-						if ( !(_la==BICONDICIONAL || _la==IMPLICA) ) {
+						if ( !(_la==BICONDITIONAL || _la==IMPLICATION) ) {
 						_errHandler.recoverInline(this);
 						}
 						else {
@@ -319,7 +279,7 @@ public class LogicaParser extends Parser {
 							consume();
 						}
 						setState(17);
-						((ImplicacionesContext)_localctx).right = expr(2);
+						((ImplicationsContext)_localctx).right = expr(2);
 						}
 						break;
 					}
