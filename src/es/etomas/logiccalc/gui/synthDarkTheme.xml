@@ -1,0 +1,75 @@
+<synth>
+	<style id="defaultStyle">
+		<font id="defaultFont" name="Dialog" size="12" style="BOLD"/>
+		<insets id="defaultInset" top="5" left="17" right="17" bottom="5"/>
+		<opaque value ="TRUE"/>
+		<state value= "ENABLED">
+			<color id="backColor" value="#424549" type ="BACKGROUND"/>
+			<color id="foreUnfocusedColor" value="LIGHT_GRAY" type ="FOREGROUND"/>
+			<color value="WHITE" type="FOCUS"/>
+		</state>
+		
+	</style>
+	
+	<style id="panelStyle" clone="defaultStyle">
+		<insets id="noInset" top="0" left="0" right="0" bottom="0"/>
+	</style>
+	
+	<style id="buttonStyle" clone="defaultStyle">
+		<property key="Button.defaultButtonFollowsFocus" type="boolean" value="false"/>
+		<state value="MOUSE_OVER">
+			<color value="WHITE" type="TEXT_FOREGROUND"/>
+		</state>
+		<state value="PRESSED and MOUSE_OVER">
+			<color value="WHITE" type="TEXT_FOREGROUND"/>
+			<color value="#2F323B" type="BACKGROUND"/>
+		</state>
+	</style>
+	
+	<style id="labelStyle" clone="defaultStyle">
+		<opaque value="false"></opaque>
+	</style>
+	
+	<style id="textFieldStyle" clone="defaultStyle">
+		<state>
+			<color value="WHITE" type="TEXT_FOREGROUND"/>
+		</state>
+		<state value="SELECTED">
+			<color value="#7289da" type="TEXT_BACKGROUND"/>
+		</state>
+		<state value="FOCUSED AND SELECTED">
+			<color value="BLUE" type="BACKGROUND"/>
+			<color value="BLUE" type="FOREGROUND"/>
+			<color value="#7289da" type="TEXT_BACKGROUND"/>
+		</state>
+	</style>
+	
+	<style id="arrowStyle" clone="defaultStyle">
+		<insets idref="noInset"/>
+		<state>
+			<color value="#424549" type="BACKGROUND"/>
+		</state>
+		<state value="MOUSE_OVER">
+			<color value="GRAY" type="BACKGROUND"/>
+		</state>
+		<state value="PRESSED and MOUSE_OVER">
+			<color value="#2F323B" type="BACKGROUND"/>
+		</state>
+	</style>
+	
+	<style id="scrollStyle" clone="defaultStyle">
+		<insets idref="noInset"/>
+		<state>
+			<color value="BLACK" type="BACKGROUND"/>
+			<color value="BLACK" type="FOREGROUND"/>
+		</state>
+	</style>
+	
+	<bind style="defaultStyle" type="region" key=".*"/>
+	<bind style="panelStyle" type="region" key="panel"/>
+	<bind style="buttonStyle" type="region" key="button"/>
+	<bind style="labelStyle" type="region" key="label"/>
+	<bind style="textFieldStyle" type="region" key="textfield"/>
+	<bind style="arrowStyle" type="region" key="arrowbutton"/>
+	<bind style="scrollStyle" type="region" key="scrollbar" />
+</synth>

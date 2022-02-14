@@ -1,4 +1,4 @@
-package parser;
+package es.etomas.logiccalc.logicparsers;
 
 import java.util.ArrayList;
 import java.util.Iterator;

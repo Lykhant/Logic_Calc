@@ -1,10 +1,10 @@
-package parser;
+package es.etomas.logiccalc.logicparsers;
 
-import parser.PropLogicParser.AtomContext;
-import parser.PropLogicParser.ConjDisjunctionContext;
-import parser.PropLogicParser.ImplicationsContext;
-import parser.PropLogicParser.NegatedContext;
-import parser.PropLogicParser.ParenthesisContext;
+import es.etomas.logiccalc.logicparsers.PropLogicParser.AtomContext;
+import es.etomas.logiccalc.logicparsers.PropLogicParser.ConjDisjunctionContext;
+import es.etomas.logiccalc.logicparsers.PropLogicParser.ImplicationsContext;
+import es.etomas.logiccalc.logicparsers.PropLogicParser.NegatedContext;
+import es.etomas.logiccalc.logicparsers.PropLogicParser.ParenthesisContext;
 
 public class PropLogicVisitorC extends PropLogicBaseVisitor<PropLogic>{
 

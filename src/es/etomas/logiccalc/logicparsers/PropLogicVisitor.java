@@ -1,4 +1,4 @@
-package parser;
+package es.etomas.logiccalc.logicparsers;
 // Generated from PropLogic.g4 by ANTLR 4.9.3
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 

@@ -1,4 +1,4 @@
-package functions;
+package es.etomas.logiccalc.functions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,8 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import parser.PropLogic;
-import parser.PropLogic.LogicType;
+import es.etomas.logiccalc.logicparsers.PropLogic;
+import es.etomas.logiccalc.logicparsers.PropLogic.LogicType;
 
 public class PropLogicUtils {
 
@@ -634,5 +634,7 @@ public class PropLogicUtils {
 
 		return res;
 	}
+	
 
+	
 }
