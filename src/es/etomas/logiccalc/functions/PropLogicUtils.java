@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 import es.etomas.logiccalc.logicparsers.PropLogic;
 import es.etomas.logiccalc.logicparsers.PropLogic.LogicType;
 
-public class PropLogicUtils {
+public abstract class PropLogicUtils {
 
 	/**
 	 * Gets all the operations contained in the logic expression
@@ -33,31 +33,25 @@ public class PropLogicUtils {
 	 */
 	public static Set<PropLogic> atomSet(PropLogic input) {
 		return input.stream()
-				.filter(expr->expr.isAtom())
+				.filter(PropLogic::isAtom)
 				.collect(Collectors.toSet());
 	}
 
 	/**
 	 * Auxiliary method to print a message under a certain condition
 	 * @param message The message to print
-	 * @param silent Whether the message should be printed or not
 	 */
-	private static void printStep(String message, Boolean silent) {
-		if(!silent) {
-			System.out.println(message);
-		}
 
-	}
 
 	/**
 	 * Checks if the given logic expression is in CNF or not
 	 * @param input The expression to check
 	 * @return A Boolean representing whether the expression is in CNF or not
 	 */
-	public static Boolean isCNF(PropLogic input) {
+	public static boolean isCNF(PropLogic input) {
 
 		//Skip other calculations if the expression is a negated operation
-		Boolean res = input.isAtom() || !input.isNegated();
+		boolean res = input.isAtom() || !input.isNegated();
 
 		if(res) {
 			switch (input.getType()) {
@@ -67,14 +61,14 @@ public class PropLogicUtils {
 				break;
 			case ATOM : break;
 			//Cannot contain exclusive disjunctions or implications
-			case BICONDITIONAL:
-			case IMPLICATION:
+			case BICONDITIONAL,IMPLICATION:
 				res = false;
 				break;
 			//If conjunction, both of its children must be in CNF
 			case CONJUNCTION:
 				res = isCNF(input.getLeft()) && isCNF(input.getRight());
 			break;
+			
 			}
 		}
 		return res;
@@ -122,7 +116,7 @@ public class PropLogicUtils {
 					//Combine all disjunctions into conjunctions
 					inputCopy = zipped.stream()
 						.reduce((l1, l2) -> PropLogic.ofOp(l1, "and", l2))
-						.get();
+						.orElse(null);
 
 				} else {
 					//Apply De Morgan if formula is negated
@@ -173,20 +167,18 @@ public class PropLogicUtils {
 	 * @param input
 	 */
 	public static void truthTable(PropLogic input) {
-
+		
 		List<String> atoms = atomSet(input).stream()
-				.map(expr->expr.getLabel())
+				.map(PropLogic::getLabel)
 				.distinct()
 				.sorted()
 				.toList();
 
 		//Max binary value: 2^n - 1
-		Integer length = Double.valueOf(
-				Math.pow(2, atoms.size()))
-				.intValue();
+		Integer length = (int) Math.pow(2, atoms.size());
 
 		//Header: Variable names separated by spaces, and the input expression
-		System.out.println(atoms.toString().replaceAll("[\\[,\\]]", "")
+		OpStepsSingleton.getInstance().addExplanation(atoms.toString().replaceAll("[\\[,\\]]", "")
 				+ "\t" + input);
 
 		for (int i = 0; i < length; i++) {
@@ -208,7 +200,7 @@ public class PropLogicUtils {
 
 			//Printed line: The binary string and the value it returns, the latter
 			//centered under the input
-			System.out.println(binary + "\t" +
+			OpStepsSingleton.getInstance().addExplanation(binary + "\t" +
 					String.format("%" + input.toString().length()/2 + "s",
 							(input.eval(mappedValues)? "1" : "0")));
 		}
@@ -220,21 +212,19 @@ public class PropLogicUtils {
 	 * @param input The expression to check
 	 * @return Whether the expression is an alpha expression or not
 	 */
-	private static Boolean isAlpha(PropLogic input) {
-		Boolean res = false;
+	private static boolean isAlpha(PropLogic input) {
+		boolean res = false;
 
 		switch (input.getType()) {
 		//Conjunctions or biconditionals when not negated
-		case CONJUNCTION:
-		case BICONDITIONAL:
+		case CONJUNCTION,BICONDITIONAL:
 			res = !input.isNegated();
 			break;
 		//Disjunctions or implications when negated
-		case DISJUNCTION:
-		case IMPLICATION:
+		case DISJUNCTION, IMPLICATION:
 			res = input.isNegated();
 			break;
-		case ATOM: res = false;
+		case ATOM:
 			break;
 		}
 
@@ -244,19 +234,18 @@ public class PropLogicUtils {
 	/**
 	 * Operates on a branch of a truth tree, prioritizing alpha operations.
 	 * @param branch A Set of logic expressions representing a branch of the tree
-	 * @param silent Whether the calculation steps should be printed or not
 	 * @return A Set including the resulting branch(es)
 	 */
-	private static Set<Set<PropLogic>> truthTreeOp(Set<PropLogic> branch, Boolean silent) {
+	private static Set<Set<PropLogic>> truthTreeOp(Set<PropLogic> branch) {
 
-		printStep("  Operating on branch: " + branch,silent);
+		OpStepsSingleton.getInstance().addExplanation("  Operating on branch: " + branch);
 
 		Set<Set<PropLogic>> resBranches = Set.of(branch);
 
 		//Find first alpha operation in the branch
 		//If there are no branches, find the first beta operation
 		PropLogic toOperate = branch.stream()
-				.filter(expr->isAlpha(expr))
+				.filter(PropLogicUtils::isAlpha)
 				.findFirst()
 				.orElse(branch.stream()
 						.filter(expr->!expr.isAtom())
@@ -265,13 +254,12 @@ public class PropLogicUtils {
 		//Avoid any other calculations if all elements are atoms
 		if(toOperate != null) {
 
-			printStep("    Chosen expression: " + toOperate,silent);
+			OpStepsSingleton.getInstance().addExplanation("    Chosen expression: " + toOperate);
 			List<PropLogic> components = List.of();
 			//Get components of the expression
-			switch (toOperate.getType()) {
+			switch(toOperate.getType()) {
 			//(A and B), (A or B): A, B
-			case CONJUNCTION:
-			case DISJUNCTION:
+			case CONJUNCTION, DISJUNCTION:
 				components = List.of(
 						toOperate.getLeft(),
 						toOperate.getRight());
@@ -296,7 +284,7 @@ public class PropLogicUtils {
 			//components
 			if(toOperate.isNegated()) {
 						components = components.stream()
-							.map(expr->expr.negate())
+							.map(PropLogic::negate)
 							.toList();
 					}
 
@@ -307,9 +295,9 @@ public class PropLogicUtils {
 
 				//Alpha: Replace the operated element with its components
 				//in the branch
-				printStep("    Alpha operation: " +
+				OpStepsSingleton.getInstance().addExplanation("    Alpha operation: " +
 						(toOperate.isNegated()?"negated ":"") +
-						toOperate.getType().toString().toLowerCase(), silent);
+						toOperate.getType().toString().toLowerCase());
 
 				resBranches = Set.of(branch.stream()
 						.flatMap(expr->expr.equals(toOperate)?
@@ -322,9 +310,9 @@ public class PropLogicUtils {
 
 				//Beta: Split the branch in 2, with a different component of
 				//the operated element
-				printStep("    Beta operation: " +
+				OpStepsSingleton.getInstance().addExplanation("    Beta operation: " +
 						(toOperate.isNegated()?"negated ":"") +
-						toOperate.getType().toString().toLowerCase(), silent);
+						toOperate.getType().toString().toLowerCase());
 
 				resBranches = Set.of(
 						branch.stream()
@@ -339,11 +327,11 @@ public class PropLogicUtils {
 							.collect(Collectors.toSet()));
 			}
 		} else {
-			printStep("    Branch composed of atoms, cannot operate "
-					+ "on it", silent);
+			OpStepsSingleton.getInstance().addExplanation("    Branch composed of atoms, cannot operate "
+					+ "on it");
 		}
 
-		 printStep("    Resulting branch(es): " + resBranches, silent);
+		 OpStepsSingleton.getInstance().addExplanation("    Resulting branch(es): " + resBranches);
 		 return resBranches;
 	}
 
@@ -352,30 +340,31 @@ public class PropLogicUtils {
 	 * returning the final result.
 	 *
 	 * @param input The expressions to make the truth tree off of
-	 * @param silent Whether steps should be printed on console or not
 	 * @return All the clauses resulting from the truth tree
 	 */
-	public static Set<Set<PropLogic>> truthTree(Set<PropLogic> input, Boolean silent) {
-
-		printStep("Making truth tree of: " + input, silent);
-
-		Set<Set<PropLogic>> trTree = Stream.iterate(
+	public static Set<Set<PropLogic>> truthTree(Set<PropLogic> input) {
+		
+		OpStepsSingleton.getInstance().addExplanation("Making truth tree of: " + input);
+		OpStepsSingleton.getInstance().addStep(input.toString());
+		
+		return Stream.iterate(
 				//Start with a set that will contain all branches
 				//(sets of expressions)
 				Set.of(input),
 				//Operate on each branch, which may split into more branches
-				tree->tree.stream()
-					.flatMap(branch->truthTreeOp(branch, silent).stream())
-					.collect(Collectors.toSet()))
+				(tree) -> {
+					OpStepsSingleton.getInstance().addStep(tree.toString());
+					return tree.stream()
+						.flatMap(branch->truthTreeOp(branch).stream())
+						.collect(Collectors.toSet());
+					})
 				//Finished when all the branches in the tree only have
 				//atoms
 				.filter(tree->tree.stream()
 						.allMatch(branch->branch.stream()
-								.allMatch(expr->expr.isAtom())))
+								.allMatch(PropLogic::isAtom)))
 				.findFirst()
-				.get();
-
-		return trTree;
+				.orElse(null);
 	}
 
 	/**
@@ -383,29 +372,26 @@ public class PropLogicUtils {
 	 * its result.
 	 *
 	 * @param input The expression to make the truth tree off of
-	 * @param silent Whether each step should be printed on console or not
 	 * @return All the clauses resulting from the truth tree
 	 */
-	public static Set<Set<PropLogic>> truthTree(PropLogic input, Boolean silent) {
-		return truthTree(Set.of(input), silent);
+	public static Set<Set<PropLogic>> truthTree(PropLogic input) {
+		return truthTree(Set.of(input));
 	}
 
 	public static Set<Set<PropLogic>> getClauses(PropLogic input) {
-		PropLogic CNF = toCNF(input);
-		Set<PropLogic> disjunctions = CNF.stream()
+		PropLogic cnf = toCNF(input);
+		Set<PropLogic> disjunctions = cnf.stream()
 			.filter(expr->expr.getType()==LogicType.DISJUNCTION ||
 				expr.isAtom())
 			.collect(Collectors.toSet());
 
 		//Gets the disjunctions and atoms that are not a child of another
 		//Afterwards, gets their atoms
-		Set<Set<PropLogic>> clauses = disjunctions.stream()
+		return disjunctions.stream()
 				.filter(expr->disjunctions.stream()
 						.noneMatch(expr2->expr2.getChildren().contains(expr)))
-				.map(expr->atomSet(expr))
+				.map(PropLogicUtils::atomSet)
 				.collect(Collectors.toSet());
-
-		return clauses;
 	}
 
 	public static Set<PropLogic> clauseFromString(String atomLine) {
@@ -425,7 +411,7 @@ public class PropLogicUtils {
 	 * @param clauseSecond
 	 * @return The new clause, null if it's not possible to make one
 	 */
-	private static Set<PropLogic> resolveClausePair(Set<PropLogic> clauseFirst, Set<PropLogic> clauseSecond, Boolean silent) {
+	private static Set<PropLogic> resolveClausePair(Set<PropLogic> clauseFirst, Set<PropLogic> clauseSecond) {
 
 		Set<PropLogic> res = null;
 		if(clausesHaveAnyComplementary(clauseFirst, clauseSecond)) {
@@ -440,13 +426,13 @@ public class PropLogicUtils {
 			res = res.stream()
 					.filter(atom->!atom.getLabel().equals(atomToRemove.getLabel()))
 					.collect(Collectors.toSet());
-			printStep("  Resolving " + clauseFirst + " and " + clauseSecond + ": " + res,silent);
+			OpStepsSingleton.getInstance().addExplanation("  Resolving " + clauseFirst + " and " + clauseSecond + ": " + res);
 		}
 
 		return res;
 	}
 
-	public static Boolean clausesHaveAnyComplementary(Set<PropLogic> clauseFirst, Set<PropLogic> clauseSecond) {
+	public static boolean clausesHaveAnyComplementary(Set<PropLogic> clauseFirst, Set<PropLogic> clauseSecond) {
 		return clauseFirst.stream()
 				.anyMatch(atom->clauseSecond.contains(atom.getComplementary()));
 	}
@@ -455,13 +441,12 @@ public class PropLogicUtils {
 	 * Gets if the subsuming expression can be subsumed by the subsumer in resolution.
 	 * @param subsuming
 	 * @param subsumer
-	 * @param silent Whether the operation should print out a message to console or not
 	 * @return True if subsumer can subsume the subsuming clause, false otherwise
 	 */
-	private static Boolean canSubsume(Set<PropLogic> subsuming, Set<PropLogic> subsumer, Boolean silent) {
+	private static boolean canSubsume(Set<PropLogic> subsuming, Set<PropLogic> subsumer) {
 		boolean res = !subsumer.equals(Set.of()) && subsuming.containsAll(subsumer) && subsuming.size() > subsumer.size();
 		if(res) {
-			printStep("  " + subsuming + " subsumed by " + subsumer, silent);
+			OpStepsSingleton.getInstance().addExplanation("  " + subsuming + " subsumed by " + subsumer);
 		}
 		return res;
 	}
@@ -471,19 +456,17 @@ public class PropLogicUtils {
 	 * Can print its steps on the console.
 	 *
 	 * @param clauses
-	 * @param silent
 	 * @return
 	 */
-	public static Boolean resolution(Set<Set<PropLogic>> clauses, Boolean silent) {
-		return resolutionAux(clauses, silent, new HashMap<>());
+	public static Boolean resolution(Set<Set<PropLogic>> clauses) {
+		return resolutionAux(clauses, new HashMap<>());
 	}
 
 	//Main recursive function for resolution
-	private static Boolean resolutionAux(Set<Set<PropLogic>> clauses, Boolean silent, Map<Set<Set<PropLogic>>,Set<PropLogic>> mem) {
-
+	private static Boolean resolutionAux(Set<Set<PropLogic>> clauses, Map<Set<Set<PropLogic>>,Set<PropLogic>> mem) {
 		Boolean res;
 
-		printStep("Working with clauses: " + clauses, silent);
+		OpStepsSingleton.getInstance().addExplanation("Working with clauses: " + clauses);
 
 		//Get all resulting clauses
 		 Set<Set<PropLogic>> newClauses = clauses.stream()
@@ -494,7 +477,7 @@ public class PropLogicUtils {
 						//new entries if necessary
 						.map(clause2->mem.computeIfAbsent(
 								Set.of(clause1,clause2),
-								s->resolveClausePair(clause1, clause2,silent))))
+								s->resolveClausePair(clause1, clause2))))
 				.collect(Collectors.toSet());
 
 		newClauses.remove(null);
@@ -503,27 +486,27 @@ public class PropLogicUtils {
 		Set<Set<PropLogic>> allClauses = Stream.concat(clauses.stream(), newClauses.stream())
 				.collect(Collectors.toSet());
 
-		printStep("Obtained clauses: " + allClauses, silent);
+		OpStepsSingleton.getInstance().addExplanation("Obtained clauses: " + allClauses);
 
 		//Removes subsumed clauses
 		Set<Set<PropLogic>> resClauses = allClauses.stream()
 				.filter(clause->allClauses.stream()
-						.noneMatch(subsumer->canSubsume(clause, subsumer, silent)))
+						.noneMatch(subsumer->canSubsume(clause, subsumer)))
 				.collect(Collectors.toSet());
 
 
 
 		//Empty set: Inconsistent
 		if(resClauses.contains(Set.of())) {
-			printStep("Encountered empty clause. Clause set is inconsistent", silent);
+			OpStepsSingleton.getInstance().addExplanation("Encountered empty clause. Clause set is inconsistent");
 			res = false;
 		//No changes in clauses: Consistent
 		} else if(resClauses.equals(clauses)) {
-			printStep("Clauses have not changed after last iteration. Clause set is consistent.", silent);
+			OpStepsSingleton.getInstance().addExplanation("Clauses have not changed after last iteration. Clause set is consistent.");
 			res = true;
 		//New iteration
 		} else {
-			res = resolutionAux(resClauses, silent, mem);
+			res = resolutionAux(resClauses, mem);
 		}
 
 		return res;
@@ -534,14 +517,15 @@ public class PropLogicUtils {
 	 * Can print its steps on the console.
 	 *
 	 * @param clauses
-	 * @param silent
 	 * @return
 	 */
-	public static Boolean dpll(Set<Set<PropLogic>> clauses, Boolean silent) {
+	public static Boolean dpll(Set<Set<PropLogic>> clauses) {
+		
+		
 		Boolean res = null;
 		Set<Set<PropLogic>> resClauses = null;
 
-		printStep("Working with clauses: " + clauses, silent);
+		OpStepsSingleton.getInstance().addExplanation("Working with clauses: " + clauses);
 
 		Set<Set<PropLogic>> tautologies = clauses.stream()
 				.filter(clause->clause.stream()
@@ -559,35 +543,35 @@ public class PropLogicUtils {
 
 		//Empty set: consistent
 		if(clauses.equals(Set.of())) {
-			printStep("Set of clauses is empty. Set is consistent.", silent);
+			OpStepsSingleton.getInstance().addExplanation("Set of clauses is empty. Set is consistent.");
 			res = true;
 
 		//Empty clause: inconsistent
 		} else if(clauses.contains(Set.of())) {
-			printStep("Encountered empty clause. Set is inconsistent.", silent);
+			OpStepsSingleton.getInstance().addExplanation("Encountered empty clause. Set is inconsistent.");
 			res = false;
 
 		//Operating:
 		//Remove tautologies
-		} else if(tautologies.size()>0) {
-			printStep("  Removing tautologies: " + tautologies, silent);
+		} else if(!tautologies.isEmpty()) {
+			OpStepsSingleton.getInstance().addExplanation("  Removing tautologies: " + tautologies);
 			resClauses = clauses.stream()
 					.filter(clause->!tautologies.contains(clause))
 					.collect(Collectors.toSet());
-			res = dpll(resClauses, silent);
+			res = dpll(resClauses);
 
 		//Unit propagation
-		} else if(literals.size()>0) {
+		} else if(!literals.isEmpty()) {
 			//Literal to remove
 			Set<PropLogic> literal = literals.stream()
 					.findAny()
-					.get();
+					.orElse(null);
 			//Expression to remove from other clauses
 			PropLogic atom = literal.stream()
 					.findAny()
-					.get();
+					.orElse(null);
 
-			printStep("  Unit propagation: " + atom,silent);
+			OpStepsSingleton.getInstance().addExplanation("  Unit propagation: " + atom);
 
 			//Remove the 2 above
 			resClauses = clauses.stream()
@@ -596,39 +580,37 @@ public class PropLogicUtils {
 							.filter(expr->!expr.equals(atom.getComplementary()))
 							.collect(Collectors.toSet()))
 					.collect(Collectors.toSet());
-			res = dpll(resClauses, silent);
+			res = dpll(resClauses);
 
 		//Pure literal elimination
-		} else if(pureLiterals.size()>0) {
+		} else if(!pureLiterals.isEmpty()) {
 			PropLogic pureLiteral = pureLiterals.stream()
 					.findAny()
-					.get();
+					.orElse(null);
 
-			printStep("  Pure literal elimination: " + pureLiteral, silent);
+			OpStepsSingleton.getInstance().addExplanation("  Pure literal elimination: " + pureLiteral);
 
 			resClauses = clauses.stream()
 					.filter(clause->!clause.contains(pureLiteral))
 					.collect(Collectors.toSet());
-			res = dpll(resClauses, silent);
+			res = dpll(resClauses);
 
 		//Division rule if all else fails
 		} else {
 			PropLogic atom = allAtoms.stream()
 					.findAny()
-					.get();
+					.orElse(null);
 
 			//Division rule
-			printStep("Could not operate on clause set. Applying division rule with literal: " + atom, silent);
+			OpStepsSingleton.getInstance().addExplanation("Could not operate on clause set. Applying division rule with literal: " + atom);
 			res = dpll(Stream.concat(clauses.stream(), Set.of(Set.of(atom)).stream())
-						.collect(Collectors.toSet()),
-						silent) ||
+						.collect(Collectors.toSet())) ||
 					dpll(Stream.concat(clauses.stream(), Set.of(Set.of(atom.getComplementary())).stream())
-							.collect(Collectors.toSet()),
-							silent);
+							.collect(Collectors.toSet()));
 			if(res) {
-				printStep("Division rule successful. Clause set is consistent.", silent);
+				OpStepsSingleton.getInstance().addExplanation("Division rule successful. Clause set is consistent.");
 			} else {
-				printStep("Division rule unsuccessful. Clause set is inconsistent.", silent);
+				OpStepsSingleton.getInstance().addExplanation("Division rule unsuccessful. Clause set is inconsistent.");
 			}
 		}
 

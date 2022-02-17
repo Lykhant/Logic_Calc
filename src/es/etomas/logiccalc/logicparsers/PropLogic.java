@@ -17,13 +17,13 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 public class PropLogic implements Iterable<PropLogic> {
 
-	public static enum LogicType {CONJUNCTION, DISJUNCTION, IMPLICATION, BICONDITIONAL, ATOM}
+	public enum LogicType {CONJUNCTION, DISJUNCTION, IMPLICATION, BICONDITIONAL, ATOM}
 
 
 	protected String label;
 	private LogicType type;
 	protected List<PropLogic> children;
-	protected Boolean negated;
+	protected boolean negated;
 	protected PropLogic parent;
 
 
@@ -98,7 +98,7 @@ public class PropLogic implements Iterable<PropLogic> {
 		this.children = logicaProp.getChildren()
 				.stream()
 				.map(expr->expr.getCopy().setParent(logicaProp))
-				.collect(Collectors.toList());
+				.toList();
 
 		this.negated = logicaProp.isNegated();
 
@@ -141,9 +141,8 @@ public class PropLogic implements Iterable<PropLogic> {
 		TokenStream tokens = new CommonTokenStream(lexer);
 		PropLogicParser parser = new PropLogicParser(tokens);
 		ParseTree parseTree = parser.expr();
-		PropLogic res = parseTree.accept(new PropLogicVisitorC());
-
-		return res;
+		
+		return parseTree.accept(new PropLogicVisitorC());
 	}
 
 	/**
@@ -188,23 +187,23 @@ public class PropLogic implements Iterable<PropLogic> {
 		return this.type;
 	}
 
-	public Boolean hasFather() {
+	public boolean hasFather() {
 		return this.parent != null;
 	}
 
-	public Boolean isNegated() {
+	public boolean isNegated() {
 		return this.negated;
 	}
 
-	public Boolean isLeft() {
+	public boolean isLeft() {
 		return this.hasFather() && this.parent.getLeft() == this;
 	}
 
-	public Boolean isRight() {
+	public boolean isRight() {
 		return this.hasFather() && this.parent.getRight() == this;
 	}
 
-	public Boolean isAtom() {
+	public boolean isAtom() {
 		return this.type == LogicType.ATOM;
 	}
 
@@ -257,7 +256,7 @@ public class PropLogic implements Iterable<PropLogic> {
 	 * @return The truth value
 	 * @throws IllegalArgumentException If any of the variables are not in the map
 	 */
-	public Boolean eval(Map<String, Boolean> values) {
+	public boolean eval(Map<String, Boolean> values) {
 		Boolean res = null;
 
 		switch (this.getType()) {
@@ -319,7 +318,7 @@ public class PropLogic implements Iterable<PropLogic> {
 	public Stream<PropLogic> stream() {
 		Iterator<PropLogic> iter = DepthPathLogicaProp.of(this);
 		List<PropLogic> list = new ArrayList<>();
-		iter.forEachRemaining(i->list.add(i));
+		iter.forEachRemaining(list::add);
 		return list.stream();
 	}
 
@@ -338,13 +337,11 @@ public class PropLogic implements Iterable<PropLogic> {
 
 		@Override
 		public boolean hasNext() {
-			// TODO Auto-generated method stub
 			return !stack.empty();
 		}
 
 		@Override
 		public PropLogic next() {
-			// TODO Auto-generated method stub
 			PropLogic current = stack.pop();
 			if(!current.isAtom()) {
 				stack.add(current.getLeft());
